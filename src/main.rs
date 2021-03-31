@@ -1,9 +1,15 @@
+use std::env;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
 
 fn main() {
-	let listener = TcpListener::bind("127.0.0.1:5000").unwrap();
+
+	let port = env::var("PORT").unwrap_or_else(|_| "5000".to_string());
+
+	let addr = format!("127.0.0.1:{}", port);
+
+	let listener = TcpListener::bind(addr).unwrap();
 
 	for stream in listener.incoming() {
 		let stream = stream.unwrap();
