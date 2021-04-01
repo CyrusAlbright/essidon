@@ -70,8 +70,6 @@ fn get_url(request: &str) -> Option<String> {
 		static ref URL_GRABBER: Regex = Regex::new("^GET ([A-Za-z0-9\\-\\._~:\\?#\\[\\]@!\\$\\&'\\(\\)\\*\\+,;%=/]+) HTTP/1.1\r\n").unwrap();
 	}
 
-	let whole_expression = URL_GRABBER.captures(request).unwrap();
-
-	whole_expression.get(1).map(|url| url.as_str().to_string())
+	URL_GRABBER.captures(request).map(|captures| captures.get(1).unwrap().as_str().to_string())
 
 }
