@@ -41,6 +41,8 @@ fn handle_connection(mut stream: TcpStream) {
 
 	match url {
 		Some(a) => {
+			println!("{}", a);
+
 			let contents = fs::read_to_string("main.html").unwrap();
 
 			let response = format!(
