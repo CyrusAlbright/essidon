@@ -21,7 +21,7 @@ fn main() {
 
 	for stream in listener.incoming() {
 		let stream = stream.unwrap();
-
+	
 		handle_connection(stream);
 	}
 }
@@ -67,13 +67,11 @@ fn handle_connection(mut stream: TcpStream) {
 
 fn get_url(request: &str) -> Option<String> {
 	lazy_static! {
-		static ref URL_GRABBER: Regex = Regex::new("^GET ([A-Za-z0-9\\-\\._~\\:\\?#\\[\\]]@\\!\\$\\&'\\(\\)\\*\\+\\,;%\\=]+) HTTP/1.1\r\n").unwrap();
+		static ref URL_GRABBER: Regex = Regex::new("^GET ([A-Za-z0-9\\-\\._~:\\?#\\[\\]@!\\$\\&'\\(\\)\\*\\+,;%=/]+) HTTP/1.1\r\n").unwrap();
 	}
 
-	let url = URL_GRABBER.find(request).unwrap().as_str();
+	let whole_expression = URL_GRABBER.captures(request).unwrap();
 
-	match url {
-		"" => None,
-		_ => Some(url.to_string())
-	}
+	whole_expression.get(1).map(|url| url.as_str().to_string())
+
 }
