@@ -42,8 +42,9 @@ fn handle_connection(mut stream: TcpStream) {
 	match url {
 		Some(page) => {
 			match page.as_ref() {
-				"/" => fetch_page(stream, "index.html"),
-				"/astro.html" => fetch_page(stream, "astro.html"),
+				"/" => fetch_item(stream, "index.html"),
+				"/astro.html" => fetch_item(stream, "astro.html"),
+				"/css/style.css" => fetch_item(stream, "css/style.css"),
 				_ => error_page(stream)
 			}
 		},
@@ -52,7 +53,7 @@ fn handle_connection(mut stream: TcpStream) {
 
 }
 
-fn fetch_page(mut stream: TcpStream, page: &str) {
+fn fetch_item(mut stream: TcpStream, page: &str) {
 	let contents = fs::read_to_string(page).unwrap();
 
 	let response = format!(
