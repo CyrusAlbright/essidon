@@ -79,9 +79,13 @@ fn error_page(mut stream: TcpStream) {
 }
 
 fn get_url(request: &str) -> Option<String> {
-	lazy_static! {
+	/*lazy_static! {
 		static ref URL_GRABBER: Regex = Regex::new("^GET ([A-Za-z0-9\\-\\._~:\\?#\\[\\]@!\\$\\&'\\(\\)\\*\\+,;%=/]+) HTTP/1.1\r\n").unwrap();
 	}
 
-	Some(URL_GRABBER.captures(request)?[1].to_string())
+	Some(URL_GRABBER.captures(request)?[1].to_string())*/
+
+	let split_by_whitespace = Some(request.split_whitespace());
+	
+	split_by_whitespace.map(|mut list| list.nth(1).map(|url| url.to_string())).flatten()
 }
