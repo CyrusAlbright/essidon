@@ -63,6 +63,7 @@ header a:hover {
 #showcase {
 	min-height: 400px;
 	/* TODO: background */
+	background-color: #888888;
 	text-align: center;
 	color: #ffffff;
 }
