@@ -40,31 +40,41 @@ fn handle_connection(mut stream: TcpStream) {
 	let url = get_url(request);
 
 	match url {
-		Some(a) => {
-			println!("{}", a);
-
-			let contents = fs::read_to_string("main.html").unwrap();
-
-			let response = format!(
-				"HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
-				contents.len(),
-				contents
-			);
-	
-			stream.write(response.as_bytes()).unwrap();
-			stream.flush().unwrap();
+		Some(page) => {
+			match page.as_ref() {
+				"/" => fetch_page(stream, "index.html"),
+				"/astro.html" => fetch_page(stream, "astro.html"),
+				_ => error_page(stream)
+			}
 		},
-		None => {
-			let status_line = "HTTP/1.1 404 NOT FOUND \r\n\r\n";
-			let contents = fs::read_to_string("404.html").unwrap();
-
-			let response = format!("{}{}", status_line, contents);
-
-			stream.write(response.as_bytes()).unwrap();
-			stream.flush().unwrap();
-		}
+		None => error_page(stream)
 	}
 
+}
+
+fn fetch_page(mut stream: TcpStream, page: &str) {
+	let contents = fs::read_to_string(page).unwrap();
+
+	let response = format!(
+		"HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+		contents.len(),
+		contents
+	);
+
+	stream.write(response.as_bytes()).unwrap();
+	stream.flush().unwrap();
+}
+
+fn error_page(mut stream: TcpStream) {
+	let contents = fs::read_to_string("404.html").unwrap();
+	
+	let response = format!(
+		"HTTP/1.1 404 NOT FOUND \r\n\r\n{}", 
+		contents
+	);
+
+	stream.write(response.as_bytes()).unwrap();
+	stream.flush().unwrap();
 }
 
 fn get_url(request: &str) -> Option<String> {
@@ -72,6 +82,5 @@ fn get_url(request: &str) -> Option<String> {
 		static ref URL_GRABBER: Regex = Regex::new("^GET ([A-Za-z0-9\\-\\._~:\\?#\\[\\]@!\\$\\&'\\(\\)\\*\\+,;%=/]+) HTTP/1.1\r\n").unwrap();
 	}
 
-	URL_GRABBER.captures(request).map(|captures| captures.get(1).unwrap().as_str().to_string())
-
+	URL_GRABBER.captures(request).map(|captures| captures.get(1).map(|url| url.as_str().to_string())).flatten()
 }
