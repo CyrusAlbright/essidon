@@ -1,7 +1,7 @@
 //#[macro_use] extern crate lazy_static;
 //extern crate regex;
 
-mod thread_pool;
+mod worker_pool;
 
 use std::env;
 use std::fs;
@@ -11,7 +11,7 @@ use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
 
-use thread_pool::ThreadPool;
+use worker_pool::WorkerPool;
 
 //use regex::Regex;
 
@@ -23,7 +23,7 @@ fn main() {
 
 	let listener = TcpListener::bind(addr).unwrap();
 
-	let pool = ThreadPool::new(4);
+	let pool = WorkerPool::new(4);
 
 	for stream in listener.incoming() {
 		let stream = stream.unwrap();
