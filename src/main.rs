@@ -1,6 +1,8 @@
 //#[macro_use] extern crate lazy_static;
 //extern crate regex;
 
+mod thread_pool;
+
 use std::env;
 use std::fs;
 
@@ -8,6 +10,8 @@ use std::io::prelude::*;
 
 use std::net::TcpListener;
 use std::net::TcpStream;
+
+use thread_pool::ThreadPool;
 
 //use regex::Regex;
 
@@ -19,10 +23,12 @@ fn main() {
 
 	let listener = TcpListener::bind(addr).unwrap();
 
+	let pool = ThreadPool::new(4);
+
 	for stream in listener.incoming() {
 		let stream = stream.unwrap();
 	
-		handle_connection(stream);
+		pool.execute(|| handle_connection(stream));
 	}
 }
 
