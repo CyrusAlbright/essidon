@@ -41,7 +41,7 @@ fn handle_connection(mut stream: TcpStream) {
 	let raw = String::from_utf8_lossy(&buffer[..]);
 	let request = raw.as_ref();
 
-	println!("Request: {}", request);
+	//println!("Request: {}", request);
 
 	let url = get_url(request);
 
