@@ -39,38 +39,27 @@ fn handle_connection(mut stream: TcpStream) {
 
 	let url = get_url(request);
 
-	match url {
+	let (status_line, page) = match url {
 		Some(page) => {
 			match page.as_ref() {
-				"/" => fetch_item(stream, "index.html"),
-				"/astro.html" => fetch_item(stream, "astro.html"),
-				"/css/style.css" => fetch_item(stream, "css/style.css"),
-				_ => error_page(stream)
+				"/" => ("HTTP/1.1 200 OK", "index.html"),
+				"/astro.html" => ("HTTP/1.1 200 OK", "astro.html"),
+				"/css/style.css" => ("HTTP/1.1 200 OK", "css/style.css"),
+				_ => ("HTTP/1.1 404 NOT FOUND", "404.html")
 			}
 		},
-		None => error_page(stream)
-	}
+		None => ("HTTP/1.1 404 NOT FOUND", "404.html")
+	};
 
+	fetch_and_send(stream, status_line, page)
 }
 
-fn fetch_item(mut stream: TcpStream, page: &str) {
+fn fetch_and_send(mut stream: TcpStream, status_line: &str, page: &str) {
 	let contents = fs::read_to_string(page).unwrap();
 
 	let response = format!(
-		"HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
-		contents.len(),
-		contents
-	);
-
-	stream.write(response.as_bytes()).unwrap();
-	stream.flush().unwrap();
-}
-
-fn error_page(mut stream: TcpStream) {
-	let contents = fs::read_to_string("404.html").unwrap();
-	
-	let response = format!(
-		"HTTP/1.1 404 NOT FOUND \r\n\r\n{}", 
+		"{}\r\n\r\n{}",
+		status_line,
 		contents
 	);
 
@@ -86,6 +75,6 @@ fn get_url(request: &str) -> Option<String> {
 	Some(URL_GRABBER.captures(request)?[1].to_string())*/
 
 	let split_by_whitespace = Some(request.split_whitespace());
-	
+
 	split_by_whitespace.map(|mut list| list.nth(1).map(|url| url.to_string())).flatten()
 }
