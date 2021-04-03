@@ -1,5 +1,5 @@
-#[macro_use] extern crate lazy_static;
-extern crate regex;
+//#[macro_use] extern crate lazy_static;
+//extern crate regex;
 
 use std::env;
 use std::fs;
@@ -9,7 +9,7 @@ use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
 
-use regex::Regex;
+//use regex::Regex;
 
 fn main() {
 
@@ -39,16 +39,16 @@ fn handle_connection(mut stream: TcpStream) {
 
 	let url = get_url(request);
 
+	let error_page = ("HTTP/1.1 404 NOT FOUND", "html/404.html");
+
 	let (status_line, page) = match url {
-		Some(page) => {
-			match page.as_ref() {
-				"/" => ("HTTP/1.1 200 OK", "index.html"),
-				"/astro.html" => ("HTTP/1.1 200 OK", "astro.html"),
-				"/css/style.css" => ("HTTP/1.1 200 OK", "css/style.css"),
-				_ => ("HTTP/1.1 404 NOT FOUND", "404.html")
-			}
+		Some(page) => match page.as_ref() {
+			"/" | "/index.html" => ("HTTP/1.1 200 OK", "html/index.html"),
+			"/astro.html" => ("HTTP/1.1 200 OK", "html/astro.html"),
+			"/style.css" => ("HTTP/1.1 200 OK", "css/style.css"),
+			_ => error_page
 		},
-		None => ("HTTP/1.1 404 NOT FOUND", "404.html")
+		None => error_page
 	};
 
 	fetch_and_send(stream, status_line, page)
