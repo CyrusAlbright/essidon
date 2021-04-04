@@ -2,6 +2,7 @@
 //extern crate regex;
 
 mod worker_pool;
+mod db;
 
 use std::env;
 use std::fs;
@@ -50,7 +51,7 @@ fn handle_connection(mut stream: TcpStream) {
 	let (status_line, page) = match url {
 		Some(page) => match page.as_ref() {
 			"/" | "/index.html" => ("HTTP/1.1 200 OK", "html/index.html"),
-			"/astro.html" => ("HTTP/1.1 200 OK", "html/astro.html"),
+			"/about.html" => ("HTTP/1.1 200 OK", "html/about.html"),
 			"/style.css" => ("HTTP/1.1 200 OK", "css/style.css"),
 			_ => error_page
 		},
@@ -73,7 +74,7 @@ fn fetch_and_send(mut stream: TcpStream, status_line: &str, page: &str) {
 	stream.flush().unwrap();
 }
 
-fn get_url(request: &str) -> Option<String> {
+fn get_url(request: &str) -> Option<&str> {
 	/*lazy_static! {
 		static ref URL_GRABBER: Regex = Regex::new("^GET ([A-Za-z0-9\\-\\._~:\\?#\\[\\]@!\\$\\&'\\(\\)\\*\\+,;%=/]+) HTTP/1.1\r\n").unwrap();
 	}
@@ -82,5 +83,5 @@ fn get_url(request: &str) -> Option<String> {
 
 	let split_by_whitespace = Some(request.split_whitespace());
 
-	split_by_whitespace.map(|mut list| list.nth(1).map(|url| url.to_string())).flatten()
+	split_by_whitespace.map(|mut list| list.nth(1).map(|url| url)).flatten()
 }
