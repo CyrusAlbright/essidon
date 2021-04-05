@@ -2,7 +2,7 @@
 //extern crate regex;
 
 mod worker_pool;
-mod db;
+mod database;
 
 use std::env;
 use std::fs;
@@ -13,6 +13,7 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 
 use worker_pool::WorkerPool;
+use database::Database;
 
 //use regex::Regex;
 
@@ -26,14 +27,16 @@ fn main() {
 
 	let pool = WorkerPool::new(4);
 
+	let database = Database::new().expect("Database init failed");
+
 	for stream in listener.incoming() {
 		let stream = stream.unwrap();
 	
-		pool.execute(|| handle_connection(stream));
+		pool.execute(|| handle_connection(database, stream));
 	}
 }
 
-fn handle_connection(mut stream: TcpStream) {
+fn handle_connection(db: Database, mut stream: TcpStream) {
 	let mut buffer = [0; 1024];
 	stream.read(&mut buffer).unwrap();
 
@@ -48,17 +51,27 @@ fn handle_connection(mut stream: TcpStream) {
 
 	let error_page = ("HTTP/1.1 404 NOT FOUND", "html/404.html");
 
-	let (status_line, page) = match url {
+	match url {
 		Some(page) => match page.as_ref() {
-			"/" | "/index.html" => ("HTTP/1.1 200 OK", "html/index.html"),
-			"/about.html" => ("HTTP/1.1 200 OK", "html/about.html"),
-			"/style.css" => ("HTTP/1.1 200 OK", "css/style.css"),
-			_ => error_page
+			"/" | "/index.html" => fetch_and_send(stream, "HTTP/1.1 200 OK", "html/index.html"),
+			"/about.html" => fetch_and_send(stream, "HTTP/1.1 200 OK", "html/about.html"),
+			"/style.css" => fetch_and_send(stream, "HTTP/1.1 200 OK", "css/style.css"),
+			"/users" => {
+				for row in db.fetch().expect("Failed to fetch rows") {
+					let id: i32 = row.get(0);
+					let username: &str = row.get(1);
+					let email: &str = row.get(2);
+					let hash: &str = row.get(3);
+					
+					println!("Person: {} {} {} {}", id, username, email, hash);
+				}
+				
+				//send(stream, format!("HTTP/1.1 200 OK\r\n\r\n{}", row))
+			},
+			_ => fetch_and_send(stream, "HTTP/1.1 404 NOT FOUND", "html/404.html")
 		},
-		None => error_page
-	};
-
-	fetch_and_send(stream, status_line, page)
+		None => fetch_and_send(stream, "HTTP/1.1 404 NOT FOUND", "html/404.html")
+	}
 }
 
 fn fetch_and_send(mut stream: TcpStream, status_line: &str, page: &str) {
@@ -70,6 +83,10 @@ fn fetch_and_send(mut stream: TcpStream, status_line: &str, page: &str) {
 		contents
 	);
 
+	send(stream, response.as_ref());	
+}
+
+fn send(mut stream: TcpStream, response: &str) {
 	stream.write(response.as_bytes()).unwrap();
 	stream.flush().unwrap();
 }
