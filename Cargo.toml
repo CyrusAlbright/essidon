@@ -8,6 +8,8 @@ edition = "2018"
 
 [dependencies]
 postgres = "0.19.1"
+postgres-openssl = "0.5.0"
+openssl = "0.10.33"
 
 [[bin]]
 name = "curious-enigma"
