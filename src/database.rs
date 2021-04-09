@@ -1,4 +1,4 @@
-use postgres::{Client, NoTls, Row, Error};
+use postgres::{Client, NoTls, Row, Error, Config};
 
 pub struct Database {
 	client: Client
@@ -6,7 +6,7 @@ pub struct Database {
 
 impl Database {
 	pub fn new() -> Result<Database, String> {
-		let client = Client::connect("host=0.0.0.0 user=postgres", NoTls).map_err(|_| "Error")?;
+		let client = Client::connect("host=ec2-52-7-115-250.compute-1.amazonaws.com dbname=deb6b3ucs3l9cg user=pltegjiermmuku port=5432 password=placeholder", NoTls).map_err(|_| "Connection error")?;
 
 		Ok(Database { client })
 	}
