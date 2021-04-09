@@ -57,16 +57,26 @@ fn handle_connection(db: Arc<Mutex<Database>>, mut stream: TcpStream) {
 			"/about.html" => fetch_and_send(stream, "HTTP/1.1 200 OK", "html/about.html"),
 			"/style.css" => fetch_and_send(stream, "HTTP/1.1 200 OK", "css/style.css"),
 			"/users" => {
-				for row in db.lock().unwrap().fetch().expect("Failed to fetch rows") {
-					let id: i32 = row.get(0);
-					let username: &str = row.get(1);
-					let email: &str = row.get(2);
-					let hash: &str = row.get(3);
-
-					println!("Person: {} {} {} {}", id, username, email, hash);
-				}
+				let rows = db.lock().unwrap().fetch().expect("Failed to fetch rows");
+				let row = rows.get(0).expect("No rows");
 				
-				//send(stream, format!("HTTP/1.1 200 OK\r\n\r\n{}", row))
+				let id: i32 = row.get(0);
+				let username: &str = row.get(1);
+				let email: &str = row.get(2);
+				let hash: &str = row.get(3);
+
+				println!("Person: {} {} {} {}", id, username, email, hash);
+
+				let response = format!(
+					"{}\r\n\r\n{{ \"response\" : \"{} {} {} {}\" }}",
+					"HTTP/1.1 200 OK",
+					id,
+					username,
+					email,
+					hash
+				);
+				
+				send(stream, response.as_ref());
 			},
 			_ => fetch_and_send(stream, "HTTP/1.1 404 NOT FOUND", "html/404.html")
 		},
