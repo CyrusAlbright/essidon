@@ -15,7 +15,7 @@ impl Database {
 		let connector = MakeTlsConnector::new(builder.build());
 
 		let client = Client::connect(
-			format!("host=ec2-52-7-115-250.compute-1.amazonaws.com dbname=deb6b3ucs3l9cg user=pltegjiermmuku port=5432 password={}", fs::read_to_string("db.info").unwrap().as_str()), 
+			format!("host=ec2-52-7-115-250.compute-1.amazonaws.com dbname=deb6b3ucs3l9cg user=pltegjiermmuku port=5432 password={}", fs::read_to_string("db.info").unwrap()).as_str(), 
 			connector
 		).map_err(|_| "Connection error")?;
 
