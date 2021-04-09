@@ -63,17 +63,15 @@ fn handle_connection(db: Arc<Mutex<Database>>, mut stream: TcpStream) {
 				let id: i32 = row.get(0);
 				let username: &str = row.get(1);
 				let email: &str = row.get(2);
-				let hash: &str = row.get(3);
 
-				println!("Person: {} {} {} {}", id, username, email, hash);
+				println!("Person: {} {} {}", id, username, email);
 
 				let response = format!(
-					"{}\r\n\r\n{{ \"response\" : \"{} {} {} {}\" }}",
+					"{}\r\n\r\n{{ {{ \"id\" : \"{}\", \"username\" : \"{}\", \"email\" : \"{}\" }} }}",
 					"HTTP/1.1 200 OK",
 					id,
 					username,
-					email,
-					hash
+					email
 				);
 				
 				send(stream, response.as_ref());
