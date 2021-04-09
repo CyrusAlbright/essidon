@@ -72,11 +72,9 @@ impl Worker {
 			
 			match message {
 				Message::NewJob(job) => {
-					job();
+					job()
 				},
-				Message::Terminate => {
-					break;
-				}
+				Message::Terminate => {}
 			}
 		});
 

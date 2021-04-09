@@ -1,6 +1,3 @@
-//#[macro_use] extern crate lazy_static;
-//extern crate regex;
-
 mod worker_pool;
 mod database;
 
@@ -9,13 +6,14 @@ use std::fs;
 
 use std::io::prelude::*;
 
+use std::sync::Mutex;
+use std::sync::Arc;
+
 use std::net::TcpListener;
 use std::net::TcpStream;
 
 use worker_pool::WorkerPool;
 use database::Database;
-
-//use regex::Regex;
 
 fn main() {
 
@@ -25,18 +23,20 @@ fn main() {
 
 	let listener = TcpListener::bind(addr).unwrap();
 
+	let database = Arc::new(Mutex::new(database::Database::new().expect("Database init failed")));
+	
 	let pool = WorkerPool::new(4);
-
-	let database = Database::new().expect("Database init failed");
-
+	
 	for stream in listener.incoming() {
 		let stream = stream.unwrap();
-	
-		pool.execute(|| handle_connection(database, stream));
+
+		let database_mutex_clone = Arc::clone(&database);
+
+		pool.execute(|| handle_connection(database_mutex_clone, stream));
 	}
 }
 
-fn handle_connection(db: Database, mut stream: TcpStream) {
+fn handle_connection(db: Arc<Mutex<Database>>, mut stream: TcpStream) {
 	let mut buffer = [0; 1024];
 	stream.read(&mut buffer).unwrap();
 
@@ -49,7 +49,7 @@ fn handle_connection(db: Database, mut stream: TcpStream) {
 
 	let url = get_url(request);
 
-	let error_page = ("HTTP/1.1 404 NOT FOUND", "html/404.html");
+	//let error_page = ("HTTP/1.1 404 NOT FOUND", "html/404.html");
 
 	match url {
 		Some(page) => match page.as_ref() {
@@ -57,12 +57,12 @@ fn handle_connection(db: Database, mut stream: TcpStream) {
 			"/about.html" => fetch_and_send(stream, "HTTP/1.1 200 OK", "html/about.html"),
 			"/style.css" => fetch_and_send(stream, "HTTP/1.1 200 OK", "css/style.css"),
 			"/users" => {
-				for row in db.fetch().expect("Failed to fetch rows") {
+				for row in db.lock().unwrap().fetch().expect("Failed to fetch rows") {
 					let id: i32 = row.get(0);
 					let username: &str = row.get(1);
 					let email: &str = row.get(2);
 					let hash: &str = row.get(3);
-					
+
 					println!("Person: {} {} {} {}", id, username, email, hash);
 				}
 				
@@ -74,7 +74,7 @@ fn handle_connection(db: Database, mut stream: TcpStream) {
 	}
 }
 
-fn fetch_and_send(mut stream: TcpStream, status_line: &str, page: &str) {
+fn fetch_and_send(stream: TcpStream, status_line: &str, page: &str) {
 	let contents = fs::read_to_string(page).unwrap();
 
 	let response = format!(
@@ -92,12 +92,6 @@ fn send(mut stream: TcpStream, response: &str) {
 }
 
 fn get_url(request: &str) -> Option<&str> {
-	/*lazy_static! {
-		static ref URL_GRABBER: Regex = Regex::new("^GET ([A-Za-z0-9\\-\\._~:\\?#\\[\\]@!\\$\\&'\\(\\)\\*\\+,;%=/]+) HTTP/1.1\r\n").unwrap();
-	}
-
-	Some(URL_GRABBER.captures(request)?[1].to_string())*/
-
 	let split_by_whitespace = Some(request.split_whitespace());
 
 	split_by_whitespace.map(|mut list| list.nth(1).map(|url| url)).flatten()
