@@ -74,6 +74,7 @@ fn handle_connection(db: Arc<Mutex<Database>>, mut stream: TcpStream) {
 				}).collect::<Vec<String>>().join(",\r\n");
 
 				println!("{}", data);
+				println!("{}", data);
 
 				let response = format!(
 					"{}\r\n{}\r\n\r\n{{\r\n{}\r\n}}",
