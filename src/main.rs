@@ -69,7 +69,7 @@ fn handle_connection(db: Arc<Mutex<Database>>, mut stream: TcpStream) {
 				let response = format!(
 					"{}\r\n{}\r\n{{ {{ \"id\" : \"{}\", \"username\" : \"{}\", \"email\" : \"{}\" }} }}",
 					"HTTP/1.1 200 OK",
-					"Content-Type: application/json;",
+					"Content-Type: application/json; charset=UTF-8",
 					id,
 					username,
 					email
