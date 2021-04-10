@@ -67,7 +67,7 @@ fn handle_connection(db: Arc<Mutex<Database>>, mut stream: TcpStream) {
 				println!("Person: {} {} {}", id, username, email);
 
 				let response = format!(
-					"{}\r\n
+					"{}
 					{}
 					{{
 						{{
