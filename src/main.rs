@@ -64,8 +64,6 @@ fn handle_connection(db: Arc<Mutex<Database>>, mut stream: TcpStream) {
 				let username: &str = row.get(1);
 				let email: &str = row.get(2);
 
-				println!("Person: {} {} {}", id, username, email);
-
 				let response = format!(
 					"{}\r\n{}\r\n\r\n{{\r\n\"id\" : \"{}\",\r\n\"username\" : \"{}\",\r\n\"email\" : \"{}\"\r\n}}",
 					"HTTP/1.1 200 OK",
@@ -74,8 +72,6 @@ fn handle_connection(db: Arc<Mutex<Database>>, mut stream: TcpStream) {
 					username,
 					email
 				);
-
-				println!("{}", response);
 				
 				send(stream, response.as_ref());
 			},
