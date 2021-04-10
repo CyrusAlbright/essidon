@@ -73,16 +73,12 @@ fn handle_connection(db: Arc<Mutex<Database>>, mut stream: TcpStream) {
 					)
 				}).collect::<Vec<String>>().join(",\r\n");
 
-				println!("{}", data);
-
 				let response = format!(
-					"{}\r\n{}\r\n\r\n{{\r\n{}\r\n}}",
+					"{}\r\n{}\r\n\r\n{{\r\n\"rows\" : [{}]\r\n}}",
 					"HTTP/1.1 200 OK",
 					"Content-Type: application/json; charset=UTF-8",
 					data
 				);
-
-				println!("{}", response);
 				
 				send(stream, response.as_ref());
 			},
