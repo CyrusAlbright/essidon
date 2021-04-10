@@ -15,6 +15,8 @@ use std::net::TcpStream;
 use worker_pool::WorkerPool;
 use database::Database;
 
+use std::iter::{Map};
+
 fn main() {
 
 	let port = env::var("PORT").unwrap_or_else(|_| "5000".to_string());
@@ -58,19 +60,24 @@ fn handle_connection(db: Arc<Mutex<Database>>, mut stream: TcpStream) {
 			"/style.css" => fetch_and_send(stream, "HTTP/1.1 200 OK", "css/style.css"),
 			"/users" => {
 				let rows = db.lock().unwrap().fetch().expect("Failed to fetch rows");
-				let row = rows.get(0).expect("No rows");
-				
-				let id: i32 = row.get(0);
-				let username: &str = row.get(1);
-				let email: &str = row.get(2);
+				let data = rows.iter().map(|row: &postgres::Row| {
+					let id: i32 = row.get(0);
+					let username: &str = row.get(1);
+					let email: &str = row.get(2);
+
+					format!(
+						"{{\r\n\"id\" : \"{}\",\r\n\"username\" : \"{}\",\r\n\"email\" : \"{}\"\r\n}}",
+						id,
+						username,
+						email
+					)
+				}).collect::<Vec<String>>().join(",\r\n");
 
 				let response = format!(
-					"{}\r\n{}\r\n\r\n{{\r\n\"id\" : \"{}\",\r\n\"username\" : \"{}\",\r\n\"email\" : \"{}\"\r\n}}",
+					"{}\r\n{}\r\n\r\n{{\r\n{}\r\n}}",
 					"HTTP/1.1 200 OK",
 					"Content-Type: application/json; charset=UTF-8",
-					id,
-					username,
-					email
+					data
 				);
 				
 				send(stream, response.as_ref());
