@@ -81,6 +81,8 @@ fn handle_connection(db: Arc<Mutex<Database>>, mut stream: TcpStream) {
 					username,
 					email
 				);
+
+				println!("{}", response);
 				
 				send(stream, response.as_ref());
 			},
