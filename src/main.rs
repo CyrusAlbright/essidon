@@ -32,7 +32,7 @@ async fn style(_req: HttpRequest) -> Result<NamedFile, Error> {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
 	let mut settings = config::Config::default();
-	settings.merge(config::Environment::with_prefix("APP")).unwrap();
+	settings.merge(config::Environment::default()).unwrap();
 
 	let port = settings.get_int("PORT").unwrap();
 	let addr = format!("0.0.0.0:{}", port);
