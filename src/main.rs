@@ -40,7 +40,7 @@ async fn main() -> std::io::Result<()> {
 
 	println!("{}\r\n{}", port, other_port);
 
-	for (key, value) in env::vars() {
+	for (key, value) in std::env::vars() {
 		println!("{} : {}", key, value);
 	}
 
