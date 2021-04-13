@@ -34,7 +34,7 @@ async fn main() -> std::io::Result<()> {
 	let mut settings = config::Config::default();
 	settings.merge(config::Environment::default()).unwrap();
 
-	let port = settings.get_int("PORT").unwrap();
+	let port = settings.get_int("PORT").unwrap_or(80);
 	let addr = format!("0.0.0.0:{}", port);
 
 	HttpServer::new(|| {
