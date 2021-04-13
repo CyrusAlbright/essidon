@@ -13,19 +13,23 @@ use std::path::PathBuf;
 //use database::Database;
 
 use actix_files::NamedFile;
-use actix_web::{get, post, web, App, Error, HttpResponse, HttpRequest, HttpServer, Responder};
+use actix_web::{get, post, web, App, Error, HttpResponse, HttpRequest, Result, HttpServer, Responder};
 
-#[get("/")]
-async fn index(_req: HttpRequest) -> Result<NamedFile, Error> {
-	let path: PathBuf = "./srv/index.html".parse::<PathBuf>().unwrap();
+async fn index(req: HttpRequest) -> Result<NamedFile> {
+	let path: PathBuf = format!("./srv/{}", req.match_info().query("filename")).parse().unwrap();
 	Ok(NamedFile::open(path)?)
 }
 
-#[get("/style.css")]
+async fn not_found(req: HttpRequest) -> Result<NamedFile> {
+	let path: PathBuf = "./srv/404.html".parse().unwrap();
+	Ok(NamedFile::open(path)?)
+}
+
+/*#[get("/style.css")]
 async fn style(_req: HttpRequest) -> Result<NamedFile, Error> {
 	let path: PathBuf = "./srv/style.css".parse::<PathBuf>().unwrap();
 	Ok(NamedFile::open(path)?)
-}
+}*/
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -34,7 +38,9 @@ async fn main() -> std::io::Result<()> {
 	let addr = format!("0.0.0.0:{}", port);
 
 	HttpServer::new(|| {
-		App::new().service(index).service(style)
+		App::new()
+			.route("/{filename:.*}", web::get().to(index))
+			.default_service(web::to(not_found))
 	}).bind(addr)?.run().await
 	/*
 	let database = Arc::new(Mutex::new(database::Database::new().expect("Database init failed")));
