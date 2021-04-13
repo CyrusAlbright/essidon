@@ -40,6 +40,10 @@ async fn main() -> std::io::Result<()> {
 
 	println!("{}\r\n{}", port, other_port);
 
+	for (key, value) in env::vars() {
+		println!("{} : {}", key, value);
+	}
+
 	HttpServer::new(|| {
 		App::new().service(index).service(style)
 	}).bind(addr)?.run().await
