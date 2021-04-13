@@ -29,9 +29,6 @@ async fn style(_req: HttpRequest) -> Result<NamedFile, Error> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-	let mut settings = config::Config::default();
-	settings.merge(config::Environment::default()).unwrap();
-
 	let port = std::env::var("PORT").expect("Env var PORT has to be set")
 		.parse::<u16>().expect("Env var PORT has to be an integer");
 	let addr = format!("0.0.0.0:{}", port);
