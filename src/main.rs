@@ -35,7 +35,10 @@ async fn main() -> std::io::Result<()> {
 	settings.merge(config::Environment::default()).unwrap();
 
 	let port = settings.get_int("PORT").unwrap_or(80);
+	let other_port = std::env::var("PORT").unwrap();
 	let addr = format!("0.0.0.0:{}", port);
+
+	println!("{}\r\n{}", port, other_port);
 
 	HttpServer::new(|| {
 		App::new().service(index).service(style)
