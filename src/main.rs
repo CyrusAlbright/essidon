@@ -1,31 +1,26 @@
 //mod database;
 
-//use std::env;
-//use std::fs;
-
-//use std::io::prelude::*;
-
 //use std::sync::Mutex;
 //use std::sync::Arc;
 
-use std::path::PathBuf;
+//use std::path::PathBuf;
 
 //use database::Database;
 
 use actix_files::NamedFile;
-use actix_web::{get, post, web, App, Error, HttpResponse, HttpRequest, Result, HttpServer, Responder};
+use actix_web::{get, post, web, App, Error, HttpResponse, HttpRequest, Result, Responder, HttpServer};
+use actix_web::dev::{ServiceRequest, ServiceResponse};
 
-async fn index(req: HttpRequest) -> Result<NamedFile> {
-	let path: PathBuf = format!("./srv/{}", req.match_info().query("filename")).parse().unwrap();
-	Ok(NamedFile::open(path)?)
+/*#[get("/{filename:.*}")]
+async fn index(req: HttpRequest) -> impl Responder {
+	let path: PathBuf = format!("./srv/{}", match req.match_info().query("filename") {
+		"" => "index.html",
+		a => a
+	}).parse().unwrap();
+	NamedFile::open(path)
 }
 
-async fn not_found(req: HttpRequest) -> Result<NamedFile> {
-	let path: PathBuf = "./srv/404.html".parse().unwrap();
-	Ok(NamedFile::open(path)?)
-}
-
-/*#[get("/style.css")]
+#[get("/style.css")]
 async fn style(_req: HttpRequest) -> Result<NamedFile, Error> {
 	let path: PathBuf = "./srv/style.css".parse::<PathBuf>().unwrap();
 	Ok(NamedFile::open(path)?)
@@ -39,8 +34,19 @@ async fn main() -> std::io::Result<()> {
 
 	HttpServer::new(|| {
 		App::new()
-			.route("/{filename:.*}", web::get().to(index))
-			.default_service(web::to(not_found))
+			.default_service(
+				actix_files::Files::new("", "./srv")
+					.index_file("index.html")
+					.default_handler(|req: ServiceRequest| {
+						let (http_req, _payload) = req.into_parts();
+
+						async {
+							let response = NamedFile::open("./srv/404.html")?
+								.into_response(&http_req)?;
+							Ok(ServiceResponse::new(http_req, response))
+						}
+					})
+			)
 	}).bind(addr)?.run().await
 	/*
 	let database = Arc::new(Mutex::new(database::Database::new().expect("Database init failed")));
