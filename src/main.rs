@@ -15,8 +15,6 @@ use std::path::PathBuf;
 use actix_files::NamedFile;
 use actix_web::{get, post, web, App, Error, HttpResponse, HttpRequest, HttpServer, Responder};
 
-use config::{Config, Environment};
-
 #[get("/")]
 async fn index(_req: HttpRequest) -> Result<NamedFile, Error> {
 	let path: PathBuf = "./srv/index.html".parse::<PathBuf>().unwrap();
@@ -34,15 +32,9 @@ async fn main() -> std::io::Result<()> {
 	let mut settings = config::Config::default();
 	settings.merge(config::Environment::default()).unwrap();
 
-	let port = settings.get_int("PORT").unwrap_or(80);
-	let other_port = std::env::var("PORT").unwrap();
+	let port = std::env::var("PORT").expect("Env var PORT has to be set")
+		.parse::<u16>().expect("Env var PORT has to be an integer");
 	let addr = format!("0.0.0.0:{}", port);
-
-	println!("{}\r\n{}", port, other_port);
-
-	for (key, value) in std::env::vars() {
-		println!("{} : {}", key, value);
-	}
 
 	HttpServer::new(|| {
 		App::new().service(index).service(style)
