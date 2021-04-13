@@ -41,9 +41,9 @@ async fn main() -> std::io::Result<()> {
 						let (http_req, _payload) = req.into_parts();
 
 						async {
-							let mut response = NamedFile::open("./srv/404.html")?
+							let response = NamedFile::open("./srv/404.html")?
+								.set_status_code(actix_web::http::StatusCode::from_u16(404).unwrap())
 								.into_response(&http_req)?;
-							*(response.status_mut()) = actix_web::http::StatusCode::from_u16(404).unwrap();
 							Ok(ServiceResponse::new(http_req, response))
 						}
 					})
