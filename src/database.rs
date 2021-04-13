@@ -1,4 +1,5 @@
 use std::env;
+use std::fmt;
 
 use postgres::{Client, Row, Error};
 use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode};
@@ -9,13 +10,13 @@ pub struct Database {
 }
 
 impl Database {
-	pub fn new() -> Result<Database, String> {
+	pub fn new(dbcreds: DatabaseCredentials) -> Result<Database, String> {
 		let mut builder = SslConnector::builder(SslMethod::tls()).unwrap();
 		builder.set_verify(SslVerifyMode::NONE);
 		let connector = MakeTlsConnector::new(builder.build());
 
 		let client = Client::connect(
-			format!("host=ec2-52-7-115-250.compute-1.amazonaws.com dbname=deb6b3ucs3l9cg user=pltegjiermmuku port=5432 password={}", env::var("DB_PASS").unwrap()).as_str(), 
+			format!("{}", dbcreds).as_str(), 
 			connector
 		).map_err(|_| "Connection error")?;
 
@@ -24,5 +25,26 @@ impl Database {
 
 	pub fn fetch(& mut self) -> Result<Vec<Row>, Error> {
 		self.client.query("SELECT * FROM users", &[])
+	}
+}
+
+pub struct DatabaseCredentials {
+	host: String,
+	name: String,
+	user: String,
+	port: i32,
+	pass: String
+}
+
+impl fmt::Display for DatabaseCredentials {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		format!(
+			"host={} dbname={} user={} port={} password={}",
+			self.host,
+			self.name,
+			self.user,
+			self.port,
+			self.pass
+		)
 	}
 }
