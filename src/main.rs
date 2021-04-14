@@ -7,7 +7,11 @@
 
 //use database::Database;
 
+use std::path::{Path, PathBuf};
+
+use actix_service::Service;
 use actix_files::NamedFile;
+use actix_http::http::{Uri, PathAndQuery};
 use actix_web::{get, post, web, App, Error, HttpResponse, HttpRequest, Result, Responder, HttpServer};
 use actix_web::dev::{ServiceRequest, ServiceResponse};
 
@@ -34,6 +38,38 @@ async fn main() -> std::io::Result<()> {
 
 	HttpServer::new(|| {
 		App::new()
+			.wrap_fn(|mut req, srv| {
+				let head = req.head_mut();
+				let mut path = head.uri.path().to_string();
+				let mut path_changed = false;
+				
+				if !(path.ends_with(".html") 
+					|| path.ends_with(".js")
+					|| path.ends_with(".css")) {
+					if PathBuf::from(format!("./srv{}.html", path)).exists() {
+						path += ".html";
+						path_changed = true;
+					}
+				}
+
+				if path_changed {
+					let mut parts = head.uri.clone().into_parts();
+					let query = parts.path_and_query.as_ref().and_then(|pq| pq.query());
+
+					let new_path = if let Some(q) = query {
+						format!("{}?{}", path, q)
+					} else {
+						path
+					};
+					parts.path_and_query = Some(PathAndQuery::from_maybe_shared(new_path).unwrap());
+
+					let uri = Uri::from_parts(parts).unwrap();
+					req.match_info_mut().get_mut().update(&uri);
+					req.head_mut().uri = uri;
+				}
+
+				srv.call(req)
+			})
 			.default_service(
 				actix_files::Files::new("", "./srv")
 					.index_file("index.html")
