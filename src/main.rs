@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 
 use actix_service::Service;
 use actix_files::NamedFile;
-use actix_http::http::{Uri, PathAndQuery};
+use actix_http::http::{Uri, PathAndQuery, Method};
 use actix_web::{get, post, web, App, Error, HttpResponse, HttpRequest, Result, Responder, HttpServer};
 use actix_web::dev::{ServiceRequest, ServiceResponse};
 
@@ -39,11 +39,12 @@ async fn main() -> std::io::Result<()> {
 	HttpServer::new(|| {
 		App::new()
 			.wrap_fn(|mut req, srv| {
-				let head = req.head_mut();
+				let head = req.head();
 				let mut path = head.uri.path().to_string();
 				let mut path_changed = false;
-				
-				if !(path.ends_with(".html") 
+
+				if req.head().method == Method::GET
+					&& !(path.ends_with(".html") 
 					|| path.ends_with(".js")
 					|| path.ends_with(".css")) {
 					if PathBuf::from(format!("./srv{}.html", path)).exists() {
