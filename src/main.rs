@@ -38,15 +38,16 @@ async fn main() -> std::io::Result<()> {
 		App::new()
 			.wrap_fn(|mut req, srv| {
 				let head = req.head();
-				let mut path = head.uri.path().to_string();
+				let path = head.uri.path().to_string();
 				let mut path_changed = false;
 
+				let mut new_path = path.trim_end_matches("/").to_owned();
 				if req.head().method == Method::GET
 					&& !(path.ends_with(".html") 
 					|| path.ends_with(".js")
 					|| path.ends_with(".css")) {
-					if PathBuf::from(format!("./srv{}.html", path.trim_end_matches("/"))).exists() {
-						path += ".html";
+					if PathBuf::from(format!("./srv{}.html", new_path)).exists() {
+						new_path += ".html";
 						path_changed = true;
 					}
 				}
@@ -56,9 +57,9 @@ async fn main() -> std::io::Result<()> {
 					let query = parts.path_and_query.as_ref().and_then(|pq| pq.query());
 
 					let new_path = if let Some(q) = query {
-						format!("{}?{}", path, q)
+						format!("{}?{}", new_path, q)
 					} else {
-						path
+						new_path
 					};
 					parts.path_and_query = Some(PathAndQuery::from_maybe_shared(new_path).unwrap());
 
