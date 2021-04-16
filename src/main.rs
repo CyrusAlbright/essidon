@@ -3,11 +3,9 @@
 //use std::sync::Mutex;
 //use std::sync::Arc;
 
-//use std::path::PathBuf;
-
 //use database::Database;
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use actix_service::Service;
 use actix_files::NamedFile;
@@ -47,7 +45,7 @@ async fn main() -> std::io::Result<()> {
 					&& !(path.ends_with(".html") 
 					|| path.ends_with(".js")
 					|| path.ends_with(".css")) {
-					if PathBuf::from(format!("./srv{}.html", path)).exists() {
+					if PathBuf::from(format!("./srv{}.html", path.trim_end_matches("/"))).exists() {
 						path += ".html";
 						path_changed = true;
 					}
@@ -90,37 +88,5 @@ async fn main() -> std::io::Result<()> {
 	let database = Arc::new(Mutex::new(database::Database::new().expect("Database init failed")));
 	let database_mutex_clone = Arc::clone(&database);
 	pool.execute(|| handle_connection(database_mutex_clone, stream));
-	}
 	*/
 }
-
-/*
-			"/" | "/index.html" => fetch_and_send(stream, "HTTP/1.1 200 OK", "html/index.html"),
-			"/about.html" => fetch_and_send(stream, "HTTP/1.1 200 OK", "html/about.html"),
-			"/style.css" => fetch_and_send(stream, "HTTP/1.1 200 OK", "css/style.css"),
-			"/users" => {
-				let rows = db.lock().unwrap().fetch().expect("Failed to fetch rows");
-				let data = rows.iter().map(|row: &postgres::Row| {
-					let id: i32 = row.get(0);
-					let username: &str = row.get(1);
-					let email: &str = row.get(2);
-
-					format!(
-						"{{\r\n\"id\" : \"{}\",\r\n\"username\" : \"{}\",\r\n\"email\" : \"{}\"\r\n}}",
-						id,
-						username,
-						email
-					)
-				}).collect::<Vec<String>>().join(",\r\n");
-
-				let response = format!(
-					"{}\r\n{}\r\n\r\n{{\r\n\"rows\" : [{}]\r\n}}",
-					"HTTP/1.1 200 OK",
-					"Content-Type: application/json; charset=UTF-8",
-					data
-				);
-
-				send(stream, response.as_ref());
-			},
-			_ => fetch_and_send(stream, "HTTP/1.1 404 NOT FOUND", "html/404.html")
-}*/
