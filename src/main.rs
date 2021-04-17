@@ -38,16 +38,15 @@ async fn main() -> std::io::Result<()> {
 		App::new()
 			.wrap_fn(|mut req, srv| {
 				let head = req.head();
-				let path = head.uri.path().to_string();
+				let mut path = head.uri.path().to_string();
 				let mut path_changed = false;
 
-				let mut new_path = path.trim_end_matches("/").to_owned();
 				if req.head().method == Method::GET
-					&& !(path.ends_with(".html") 
+					&& !(path.ends_with(".html")
 					|| path.ends_with(".js")
 					|| path.ends_with(".css")) {
-					if PathBuf::from(format!("./srv{}.html", new_path)).exists() {
-						new_path += ".html";
+					if PathBuf::from(format!("./srv{}.html", path)).exists() {
+						path += ".html";
 						path_changed = true;
 					}
 				}
@@ -57,9 +56,9 @@ async fn main() -> std::io::Result<()> {
 					let query = parts.path_and_query.as_ref().and_then(|pq| pq.query());
 
 					let new_path = if let Some(q) = query {
-						format!("{}?{}", new_path, q)
+						format!("{}?{}", path, q)
 					} else {
-						new_path
+						path
 					};
 					parts.path_and_query = Some(PathAndQuery::from_maybe_shared(new_path).unwrap());
 
@@ -85,9 +84,11 @@ async fn main() -> std::io::Result<()> {
 					})
 			)
 	}).bind(addr)?.run().await
-	/*
+	
+}
+
+/*
 	let database = Arc::new(Mutex::new(database::Database::new().expect("Database init failed")));
 	let database_mutex_clone = Arc::clone(&database);
 	pool.execute(|| handle_connection(database_mutex_clone, stream));
 	*/
-}
