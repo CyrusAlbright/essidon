@@ -51,11 +51,11 @@ async fn style(_req: HttpRequest) -> Result<NamedFile, Error> {
 
 #[get("/test")]
 async fn test(_req: HttpRequest, db_pool: Data<DbPool>) -> impl Responder {
-    let rows = sqlx::query_as!(User, "SELECT * FROM users")
+    let row = sqlx::query_as!(User, "SELECT * FROM users")
 		.fetch_one(db_pool.get_ref())
 		.await?;
 
-    Ok(format!("{}", rows.0))
+    Ok(format!("{}", row))
 }
 
 #[actix_web::main]
