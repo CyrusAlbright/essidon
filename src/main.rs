@@ -5,90 +5,139 @@
 
 //use database::Database;
 
+use std::env;
+
+use std::io::Result;
 use std::path::PathBuf;
 
-use actix_service::Service;
+use serde::{Deserialize, Serialize};
+
 use actix_files::NamedFile;
-use actix_http::http::{Uri, PathAndQuery, Method};
-use actix_web::{get, post, web, App, Error, HttpResponse, HttpRequest, Result, Responder, HttpServer};
+use actix_http::http::{Method, PathAndQuery, StatusCode, Uri};
+use actix_service::Service;
 use actix_web::dev::{ServiceRequest, ServiceResponse};
+use actix_web::{
+    get, post, web::Data, App, /*Error, HttpResponse, */ HttpRequest, HttpServer, Responder,
+};
+
+use sqlx::postgres::{PgPool as DbPool, PgRow};
+use sqlx::{FromRow, Row};
+
+#[derive(Serialize, FromRow)]
+struct User {
+    id: i32,
+    username: String,
+    email: String,
+    hash: String,
+    created_at: i64,
+}
 
 /*#[get("/{filename:.*}")]
 async fn index(req: HttpRequest) -> impl Responder {
-	let path: PathBuf = format!("./srv/{}", match req.match_info().query("filename") {
-		"" => "index.html",
-		a => a
-	}).parse().unwrap();
-	NamedFile::open(path)
+    let path: PathBuf = format!("./srv/{}", match req.match_info().query("filename") {
+        "" => "index.html",
+        a => a
+    }).parse().unwrap();
+    NamedFile::open(path)
 }
 
 #[get("/style.css")]
 async fn style(_req: HttpRequest) -> Result<NamedFile, Error> {
-	let path: PathBuf = "./srv/style.css".parse::<PathBuf>().unwrap();
-	Ok(NamedFile::open(path)?)
+    let path: PathBuf = "./srv/style.css".parse::<PathBuf>().unwrap();
+    NamedFile::open(path)
 }*/
 
+#[get("/test")]
+async fn test(_req: HttpRequest, db_pool: Data<DbPool>) -> impl Responder {
+    let rows = sqlx::query!("SELECT * FROM users")
+        .map(|row: PgRow| User {
+            id: row.get(0),
+            username: row.get(1),
+            email: row.get(2),
+            hash: row.get(3),
+            created_at: row.get(4),
+        })
+        .execute(db_pool.get_ref())
+        .await
+        .expect("Thing");
+
+    Ok(format!("{}", rows.0))
+}
+
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
-	let port = std::env::var("PORT").expect("Env var PORT has to be set")
-		.parse::<u16>().expect("Env var PORT has to be an integer");
-	let addr = format!("0.0.0.0:{}", port);
+async fn main() -> Result<()> {
+    let port = env::var("PORT")
+        .expect("Env var PORT has to be set")
+        .parse::<u16>()
+        .expect("Env var PORT has to be an integer");
+    let ip = env::var("ADDR").expect("Env var ADDR has to be set");
+    let addr = format!("{}:{}", ip, port);
 
-	HttpServer::new(|| {
-		App::new()
-			.wrap_fn(|mut req, srv| {
-				let head = req.head();
-				let mut path = head.uri.path().to_string();
-				let mut path_changed = false;
+    let db_url = env::var("DATABASE_URL")
+		.expect("Env var DATABASE_URL has to be set");
+    let db_pool = DbPool::connect(&db_url)
+        .await
+        .expect("Failed to connect to database");
 
-				if req.head().method == Method::GET
-					&& !(path.ends_with(".html")
-					|| path.ends_with(".js")
-					|| path.ends_with(".css")) {
-					if PathBuf::from(format!("./srv{}.html", path)).exists() {
-						path += ".html";
-						path_changed = true;
-					}
-				}
+    HttpServer::new(move || {
+        App::new()
+            .data(db_pool.clone())
+            .wrap_fn(|mut req: ServiceRequest, srv| {
+                let head = req.head();
+                let mut path = head.uri.path().to_string();
+                let mut path_changed = false;
 
-				if path_changed {
-					let mut parts = head.uri.clone().into_parts();
-					let query = parts.path_and_query.as_ref().and_then(|pq| pq.query());
+                if req.head().method == Method::GET
+                    && !(path.ends_with(".html") || path.ends_with(".js") || path.ends_with(".css"))
+                    && PathBuf::from(format!("./srv{}.html", path)).exists()
+                {
+                    path += ".html";
+                    path_changed = true;
+                }
 
-					let new_path = if let Some(q) = query {
-						format!("{}?{}", path, q)
-					} else {
-						path
-					};
-					parts.path_and_query = Some(PathAndQuery::from_maybe_shared(new_path).unwrap());
+                if path_changed {
+                    let mut parts = head.uri.clone().into_parts();
+                    let query = parts.path_and_query.as_ref().and_then(|pq| pq.query());
 
-					let uri = Uri::from_parts(parts).unwrap();
-					req.match_info_mut().get_mut().update(&uri);
-					req.head_mut().uri = uri;
-				}
+                    let new_path = if let Some(q) = query {
+                        format!("{}?{}", path, q)
+                    } else {
+                        path
+                    };
+                    parts.path_and_query = Some(PathAndQuery::from_maybe_shared(new_path).unwrap());
 
-				srv.call(req)
-			})
-			.default_service(
-				actix_files::Files::new("", "./srv")
-					.index_file("index.html")
-					.default_handler(|req: ServiceRequest| {
-						let (http_req, _payload) = req.into_parts();
+                    let uri = Uri::from_parts(parts).unwrap();
+                    req.match_info_mut().get_mut().update(&uri);
+                    req.head_mut().uri = uri;
+                }
 
-						async {
-							let response = NamedFile::open("./srv/404.html")?
-								.set_status_code(actix_web::http::StatusCode::from_u16(404).unwrap())
-								.into_response(&http_req)?;
-							Ok(ServiceResponse::new(http_req, response))
-						}
-					})
-			)
-	}).bind(addr)?.run().await
-	
+                srv.call(req)
+            })
+            .service(test)
+            .default_service(
+                actix_files::Files::new("", "./srv")
+                    .index_file("index.html")
+                    .default_handler(|req: ServiceRequest| {
+                        let (http_req, _payload) = req.into_parts();
+
+                        async {
+                            let mut response =
+                                NamedFile::open("./srv/404.html")?.into_response(&http_req)?;
+
+                            *response.status_mut() = StatusCode::NOT_FOUND;
+
+                            Ok(ServiceResponse::new(http_req, response))
+                        }
+                    }),
+            )
+    })
+    .bind(addr)?
+    .run()
+    .await
 }
 
 /*
-	let database = Arc::new(Mutex::new(database::Database::new().expect("Database init failed")));
-	let database_mutex_clone = Arc::clone(&database);
-	pool.execute(|| handle_connection(database_mutex_clone, stream));
-	*/
+let database = Arc::new(Mutex::new(database::Database::new().expect("Database init failed")));
+let database_mutex_clone = Arc::clone(&database);
+pool.execute(|| handle_connection(database_mutex_clone, stream));
+*/
