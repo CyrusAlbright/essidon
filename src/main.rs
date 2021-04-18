@@ -7,7 +7,7 @@
 
 use std::env;
 
-use std::io::Result;
+use std::io;
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
@@ -51,13 +51,13 @@ async fn style(_req: HttpRequest) -> Result<NamedFile, Error> {
 async fn test(_req: HttpRequest, db_pool: Data<DbPool>) -> impl Responder {
     let rows = sqlx::query_as!(User, "SELECT * FROM users")
 		.fetch_one(db_pool.get_ref())
-		.await?;
+		.poll_next();
 
     Ok(format!("{}", rows.0))
 }
 
 #[actix_web::main]
-async fn main() -> Result<()> {
+async fn main() -> io::Result<()> {
     let port = env::var("PORT")
         .expect("Env var PORT has to be set")
         .parse::<u16>()
