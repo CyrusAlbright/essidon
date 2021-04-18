@@ -50,16 +50,8 @@ async fn style(_req: HttpRequest) -> Result<NamedFile, Error> {
 #[get("/test")]
 async fn test(_req: HttpRequest, db_pool: Data<DbPool>) -> impl Responder {
     let rows = sqlx::query!("SELECT * FROM users")
-        .map(|row: PgRow| User {
-            id: row.get(0),
-            username: row.get(1),
-            email: row.get(2),
-            hash: row.get(3),
-            created_at: row.get(4),
-        })
-        .execute(db_pool.get_ref())
-        .await
-        .expect("Thing");
+		.fetch(db_pool.get_ref())
+		.await?;
 
     Ok(format!("{}", rows.0))
 }
