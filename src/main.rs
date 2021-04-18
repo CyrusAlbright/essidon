@@ -23,13 +23,15 @@ use actix_web::{
 use sqlx::postgres::{PgPool as DbPool, PgRow};
 use sqlx::{FromRow, Row};
 
+use chrono::NaiveDateTime;
+
 #[derive(Serialize, FromRow)]
 struct User {
     id: i32,
     username: String,
     email: String,
     hash: String,
-    created_at: i64,
+    created_at: NaiveDateTime,
 }
 
 /*#[get("/{filename:.*}")]
@@ -51,7 +53,7 @@ async fn style(_req: HttpRequest) -> Result<NamedFile, Error> {
 async fn test(_req: HttpRequest, db_pool: Data<DbPool>) -> impl Responder {
     let rows = sqlx::query_as!(User, "SELECT * FROM users")
 		.fetch_one(db_pool.get_ref())
-		.poll_next();
+		.await?;
 
     Ok(format!("{}", rows.0))
 }
