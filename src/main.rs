@@ -6,6 +6,7 @@
 //use database::Database;
 
 use std::env;
+use std::fmt;
 
 use std::io;
 use std::path::PathBuf;
@@ -32,6 +33,19 @@ struct User {
     email: String,
     hash: String,
     created_at: NaiveDateTime,
+}
+
+impl fmt::Display for User {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		format!(
+			"ID: {}, username: {}, email: {}, hash: {}, created_at: {}",
+			self.id,
+			self.username,
+			self.email,
+			self.hash,
+			self.created_at
+		)
+	}
 }
 
 /*#[get("/{filename:.*}")]
