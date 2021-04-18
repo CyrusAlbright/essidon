@@ -18,7 +18,7 @@ use actix_http::http::{Method, PathAndQuery, StatusCode, Uri};
 use actix_service::Service;
 use actix_web::dev::{ServiceRequest, ServiceResponse};
 use actix_web::{
-    get, post, web::Data, App, /*Error, HttpResponse, */ HttpRequest, HttpServer, Responder,
+    get, post, web::Data, App, Error, HttpResponse, HttpRequest, HttpServer, Responder,
 };
 
 use sqlx::postgres::{PgPool as DbPool, PgRow};
@@ -64,7 +64,7 @@ async fn style(_req: HttpRequest) -> Result<NamedFile, Error> {
 }*/
 
 #[get("/test")]
-async fn test(_req: HttpRequest, db_pool: Data<DbPool>) -> impl Responder {
+async fn test(_req: HttpRequest, db_pool: Data<DbPool>) -> Result<String, Error> {
     let row = sqlx::query_as!(User, "SELECT * FROM users")
 		.fetch_one(db_pool.get_ref())
 		.await
