@@ -67,7 +67,8 @@ async fn style(_req: HttpRequest) -> Result<NamedFile, Error> {
 async fn test(_req: HttpRequest, db_pool: Data<DbPool>) -> impl Responder {
     let row = sqlx::query_as!(User, "SELECT * FROM users")
 		.fetch_one(db_pool.get_ref())
-		.await?;
+		.await
+		.map_err("L");
 
     Ok(format!("{}", row))
 }
