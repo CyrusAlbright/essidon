@@ -68,7 +68,7 @@ async fn test(_req: HttpRequest, db_pool: Data<DbPool>) -> impl Responder {
     let row = sqlx::query_as!(User, "SELECT * FROM users")
 		.fetch_one(db_pool.get_ref())
 		.await
-		.map_err("L");
+		.expect("Failed");
 
     Ok(format!("{}", row))
 }
