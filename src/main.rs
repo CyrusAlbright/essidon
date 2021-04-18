@@ -37,7 +37,7 @@ struct User {
 
 impl fmt::Display for User {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		format!(
+		write!(f, 
 			"ID: {}, username: {}, email: {}, hash: {}, created_at: {}",
 			self.id,
 			self.username,
