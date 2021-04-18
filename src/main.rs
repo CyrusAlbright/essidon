@@ -134,7 +134,7 @@ async fn main() -> io::Result<()> {
                                 NamedFile::open("./srv/404.html")?.into_response(&http_req)?;
 
                             *response.status_mut() = StatusCode::NOT_FOUND;
-
+							
                             Ok(ServiceResponse::new(http_req, response))
                         }
                     }),
