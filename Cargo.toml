@@ -7,13 +7,10 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix-web = "3.3.2"
-actix-rt = "1.1.1"
-actix-http = "2.2.0"
-actix-files = "0.5.0"
-actix-service = "1.0.6"
-sqlx = { version = "0.5.2", features = [ "runtime-actix-native-tls", "postgres", "chrono", "macros" ] }
-serde = "1.0.125"
+tide = "0.16.0"
+async-std = { version = "1.8.0", features = ["attributes"] }
+sqlx = { version = "0.5.2", features = [ "runtime-async-std-native-tls", "postgres", "chrono", "macros" ] }
+serde = { version = "1.0.125", features = ["derive"] }
 chrono = { version = "0.4.19", features = [ "serde" ] }
 # futures = "0.3.14"
 # bcrypt = "0.8.2"
