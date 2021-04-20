@@ -37,7 +37,7 @@ impl fmt::Display for User {
 
 async fn test(mut req: Request<DbPool>) -> tide::Result {
     let row = sqlx::query_as!(User, "SELECT * FROM users")
-		.fetch_one(&req.state())
+		.fetch_one(req.state())
 		.await
 		.expect("Failed");
 
