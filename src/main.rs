@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use tide::Request;
+use tide::{Request};
 
 use sqlx::postgres::{PgPool as DbPool, PgRow};
 use sqlx::{FromRow, Row};
@@ -35,16 +35,16 @@ impl fmt::Display for User {
 	}
 }
 
-/*async fn test(db_pool: Data<DbPool>) -> Result<String, Error> {
+async fn test(mut req: Request<DbPool>) -> tide::Result {
     let row = sqlx::query_as!(User, "SELECT * FROM users")
-		.fetch_one(db_pool.get_ref())
+		.fetch_one(&req.state())
 		.await
 		.expect("Failed");
 
-    Ok(format!("{}", row))
-}*/
+    Ok(format!("{}", row).into())
+}
 
-async fn index(mut req: Request<()>) -> tide::Result {
+async fn index(mut req: Request<DbPool>) -> tide::Result {
 	Ok("Hello".into())
 }
 
@@ -63,8 +63,9 @@ async fn main() -> tide::Result<()> {
         .await
         .expect("Failed to connect to database");
 
-	let mut app = tide::new();
+	let mut app = tide::with_state(db_pool);
 	app.at("/").get(index);
+	app.at("/test").get(test);
 	app.listen(addr).await?;
 	Ok(())
 
