@@ -7,13 +7,16 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+http = "0.2.4"
 tide = "0.16.0"
 async-std = { version = "1.8.0", features = ["attributes"] }
-sqlx = { version = "0.5.2", features = [ "runtime-async-std-native-tls", "postgres", "chrono", "macros" ] }
+sqlx = { version = "0.5.1", features = [ "runtime-async-std-native-tls", "postgres", "chrono", "macros" ] }
 serde = { version = "1.0.125", features = ["derive"] }
 chrono = { version = "0.4.19", features = [ "serde" ] }
+bcrypt = "0.8.2"
+async-sqlx-session = { version = "0.3.0", features = ["pg"] }
 # futures = "0.3.14"
-# bcrypt = "0.8.2"
+# jsonwebtokens
 
 [[bin]]
 name = "curious-enigma"

@@ -1,121 +1,110 @@
+mod crypto;
+mod database;
+mod auth;
+mod config;
+
 use std::env;
-use std::fmt;
 
-use std::io;
-use std::path::PathBuf;
+// use std::path::PathBuf;
 
-use serde::{Deserialize, Serialize};
+use http::status::StatusCode;
 
-use tide::{Request};
+use database::Database;
+use database::UserRegistration;
 
-use sqlx::postgres::{PgPool as DbPool, PgRow};
-use sqlx::{FromRow, Row};
+use tide::http::mime;
 
-use chrono::NaiveDateTime;
-
-#[derive(Serialize, FromRow)]
-struct User {
-    id: i32,
-    username: String,
-    email: String,
-    hash: String,
-    created_at: NaiveDateTime,
+#[derive(Clone)]
+struct AppState {
+	database: Database,
 }
 
-impl fmt::Display for User {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		write!(f, 
-			"ID: {}, username: {}, email: {}, hash: {}, created_at: {}",
-			self.id,
-			self.username,
-			self.email,
-			self.hash,
-			self.created_at
-		)
+impl AppState {
+	async fn new() -> AppState {
+		let database_url = env::var("DATABASE_URL").expect("Env var DATABASE_URL has to be set");
+		let database = Database::connect(&database_url)
+			.await
+			.expect("Failed to connect to database");
+
+		AppState { database }
 	}
 }
 
-async fn test(mut req: Request<DbPool>) -> tide::Result {
-    let row = sqlx::query_as!(User, "SELECT * FROM users")
-		.fetch_one(req.state())
-		.await
-		.expect("Failed");
+type Request = tide::Request<AppState>;
 
-    Ok(format!("{}", row).into())
+async fn register_user(mut req: Request) -> tide::Result {
+	let reg: UserRegistration = req.body_form().await?;
+	Ok(format!(
+		r#"User "{}" registered with email "{}""#,
+		reg.username,
+		reg.email
+	).into())
 }
 
-async fn index(mut req: Request<DbPool>) -> tide::Result {
+/*async fn login_user(mut req: Request) -> tide::Result {
+
+}*/
+
+async fn index(mut req: Request) -> tide::Result {
 	Ok("Hello".into())
 }
 
 #[async_std::main]
 async fn main() -> tide::Result<()> {
-    let port = env::var("PORT")
-        .expect("Env var PORT has to be set")
-        .parse::<u16>()
-        .expect("Env var PORT has to be an integer");
-    let ip = env::var("ADDR").expect("Env var ADDR has to be set");
-    let addr = format!("{}:{}", ip, port);
+	let config = config::Config::new()?;
 
-    let db_url = env::var("DATABASE_URL")
-		.expect("Env var DATABASE_URL has to be set");
-    let db_pool = DbPool::connect(&db_url)
-        .await
-        .expect("Failed to connect to database");
-
-	let mut app = tide::with_state(db_pool);
+	let mut app = tide::with_state(AppState::new().await);
 	app.at("/").get(index);
-	app.at("/test").get(test);
-	app.listen(addr).await?;
+	app.at("/register").post(register_user);
+	// app.at("/login").post(login_user);
+	app.listen(config.address).await?;
 	Ok(())
 
-    /*.data(db_pool.clone())
-            .wrap_fn(|mut req: ServiceRequest, srv| {
-                let head = req.head();
-                let mut path = head.uri.path().to_string();
-                let mut path_changed = false;
+	/*.wrap_fn(|mut req: ServiceRequest, srv| {
+		let head = req.head();
+		let mut path = head.uri.path().to_string();
+		let mut path_changed = false;
 
-                if req.head().method == Method::GET
-                    && !(path.ends_with(".html") || path.ends_with(".js") || path.ends_with(".css"))
-                    && PathBuf::from(format!("./srv{}.html", path)).exists()
-                {
-                    path += ".html";
-                    path_changed = true;
-                }
+		if req.head().method == Method::GET
+			&& !(path.ends_with(".html") || path.ends_with(".js") || path.ends_with(".css"))
+			&& PathBuf::from(format!("./srv{}.html", path)).exists()
+		{
+			path += ".html";
+			path_changed = true;
+		}
 
-                if path_changed {
-                    let mut parts = head.uri.clone().into_parts();
-                    let query = parts.path_and_query.as_ref().and_then(|pq| pq.query());
+		if path_changed {
+			let mut parts = head.uri.clone().into_parts();
+			let query = parts.path_and_query.as_ref().and_then(|pq| pq.query());
 
-                    let new_path = if let Some(q) = query {
-                        format!("{}?{}", path, q)
-                    } else {
-                        path
-                    };
-                    parts.path_and_query = Some(PathAndQuery::from_maybe_shared(new_path).unwrap());
+			let new_path = if let Some(q) = query {
+				format!("{}?{}", path, q)
+			} else {
+				path
+			};
+			parts.path_and_query = Some(PathAndQuery::from_maybe_shared(new_path).unwrap());
 
-                    let uri = Uri::from_parts(parts).unwrap();
-                    req.match_info_mut().get_mut().update(&uri);
-                    req.head_mut().uri = uri;
-                }
+			let uri = Uri::from_parts(parts).unwrap();
+			req.match_info_mut().get_mut().update(&uri);
+			req.head_mut().uri = uri;
+		}
 
-                srv.call(req)
-            })
-            .service(test)
-            .default_service(
-                actix_files::Files::new("", "./srv")
-                    .index_file("index.html")
-                    .default_handler(|req: ServiceRequest| {
-                        let (http_req, _payload) = req.into_parts();
+		srv.call(req)
+	})
+	.default_service(
+		actix_files::Files::new("", "./srv")
+			.index_file("index.html")
+			.default_handler(|req: ServiceRequest| {
+				let (http_req, _payload) = req.into_parts();
 
-                        async {
-                            let mut response =
-                                NamedFile::open("./srv/404.html")?.into_response(&http_req)?;
+				async {
+					let mut response =
+						NamedFile::open("./srv/404.html")?.into_response(&http_req)?;
 
-                            *response.status_mut() = StatusCode::NOT_FOUND;
+					*response.status_mut() = StatusCode::NOT_FOUND;
 
-                            Ok(ServiceResponse::new(http_req, response))
-                        }
-                    }),
-            )*/
+					Ok(ServiceResponse::new(http_req, response))
+				}
+			}),
+	)*/
 }
