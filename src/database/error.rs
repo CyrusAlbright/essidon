@@ -1,13 +1,23 @@
 use crate::crypto::CryptoError;
 
+pub enum DatabaseError {
+	DatabaseError
+}
+
+impl From<sqlx::Error> for DatabaseError {
+	fn from(error: sqlx::Error) -> Self {
+		DatabaseError::DatabaseError
+	}
+}
+
 pub enum UserRegistrationError {
 	EntryError(EntryError),
-	SystemError,
+	DatabaseError(DatabaseError),
 }
 
 pub struct EntryError {
-	field: Field,
-	issue: Issue,
+	pub field: Field,
+	pub issue: Issue,
 }
 
 pub enum Field {
@@ -33,7 +43,7 @@ impl From<CryptoError> for UserRegistrationError {
 					issue: Issue::Invalid
 				}.into()
 			}
-			CryptoError::SystemError => UserRegistrationError::SystemError,
+			CryptoError::SystemError => DatabaseError::DatabaseError.into(),
 		}
 	}
 }
@@ -41,6 +51,12 @@ impl From<CryptoError> for UserRegistrationError {
 impl From<EntryError> for UserRegistrationError {
 	fn from(error: EntryError) -> Self {
 		UserRegistrationError::EntryError(error)
+	}
+}
+
+impl From<DatabaseError> for UserRegistrationError {
+	fn from(error: DatabaseError) -> Self {
+		UserRegistrationError::DatabaseError(error)
 	}
 }
 
@@ -57,11 +73,11 @@ impl From<sqlx::Error> for UserRegistrationError {
 						field: Field::Email,
 						issue: Issue::Taken
 					}.into(),
-					_ => UserRegistrationError::SystemError
+					_ => DatabaseError::DatabaseError.into()
 				},
-				None => UserRegistrationError::SystemError
+				None => DatabaseError::DatabaseError.into()
 			},
-			_ => UserRegistrationError::SystemError
+			_ => DatabaseError::DatabaseError.into()
 		}
 	}
 }

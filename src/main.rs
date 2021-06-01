@@ -5,10 +5,6 @@ mod config;
 
 use std::env;
 
-// use std::path::PathBuf;
-
-use http::status::StatusCode;
-
 use database::Database;
 use database::UserRegistration;
 

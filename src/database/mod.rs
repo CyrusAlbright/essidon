@@ -45,7 +45,7 @@ impl Database {
 		Ok(user)
 	}
 
-	pub async fn get_user_by_id(&self, id: i32) -> Option<User> {
+	pub async fn get_user_by_id(&self, id: i32) -> Result<Option<User>, DatabaseError> {
 		let user = sqlx::query_as!(
 			User, 
 			r#"
@@ -57,10 +57,10 @@ impl Database {
 		.fetch_optional(&self.connection_pool)
 		.await?;
 
-		Some(user)
+		Ok(user)
 	}
 
-	pub async fn get_user_by_username(&self, username: &str) -> Option<User> {
+	pub async fn get_user_by_username(&self, username: &str) -> Result<Option<User>, DatabaseError> {
 		let user = sqlx::query_as!(
 			User, 
 			r#"
@@ -72,10 +72,10 @@ impl Database {
 		.fetch_optional(&self.connection_pool)
 		.await?;
 
-		Some(user)
+		Ok(user)
 	}
 
-	pub async fn get_user_by_email(&self, email: &str) -> Option<User> {
+	pub async fn get_user_by_email(&self, email: &str) -> Result<Option<User>, DatabaseError> {
 		let user = sqlx::query_as!(
 			User, 
 			r#"
@@ -87,6 +87,6 @@ impl Database {
 		.fetch_optional(&self.connection_pool)
 		.await?;
 
-		Some(user)
+		Ok(user)
 	}
 }
