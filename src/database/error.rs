@@ -67,11 +67,11 @@ impl From<sqlx::Error> for UserRegistrationError {
 				Some(constraint) => {
 					println!("{}", constraint);
 					match constraint {
-						"username" => EntryError {
+						"users_username_key" => EntryError {
 							field: Field::Username,
 							issue: Issue::Taken
 						}.into(),
-						"email" => EntryError {
+						"users_email_key" => EntryError {
 							field: Field::Email,
 							issue: Issue::Taken
 						}.into(),
