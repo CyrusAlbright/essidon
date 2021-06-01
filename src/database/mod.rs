@@ -50,7 +50,7 @@ impl Database {
 			User, 
 			r#"
 				SELECT id, username, email, hash, created_at, role as "role!: Role" FROM users
-				WHERE id='$1'
+				WHERE id=$1
 			"#,
 			id
 		)
@@ -65,7 +65,7 @@ impl Database {
 			User, 
 			r#"
 				SELECT id, username, email, hash, created_at, role as "role!: Role" FROM users
-				WHERE username='$1'
+				WHERE username=$1
 			"#,
 			username
 		)
@@ -80,7 +80,7 @@ impl Database {
 			User, 
 			r#"
 				SELECT id, username, email, hash, created_at, role as "role!: Role" FROM users
-				WHERE email='$1'
+				WHERE email=$1
 			"#,
 			email
 		)
