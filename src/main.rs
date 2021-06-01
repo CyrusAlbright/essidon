@@ -39,7 +39,10 @@ async fn register_user(mut req: Request) -> tide::Result {
 			user.email,
 			user.hash
 		).into()),
-		Err(_) => Ok("Failed!".into())
+		Err(e) => match e {
+			database::UserRegistrationError::EntryError(entry) => Ok("Entry error".into()),
+			database::UserRegistrationError::DatabaseError(_) => Ok("Database error!".into())
+		}
 	}
 }
 
