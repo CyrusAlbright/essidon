@@ -8,7 +8,7 @@ use std::env;
 use database::Database;
 use database::UserRegistration;
 
-use tide::http::mime;
+// use tide::http::mime;
 
 #[derive(Clone)]
 struct AppState {
@@ -30,18 +30,24 @@ type Request = tide::Request<AppState>;
 
 async fn register_user(mut req: Request) -> tide::Result {
 	let reg: UserRegistration = req.body_form().await?;
-	Ok(format!(
-		r#"User "{}" registered with email "{}""#,
-		reg.username,
-		reg.email
-	).into())
+
+	match req.state().database.register_user(reg).await {
+		Ok(user) => Ok(format!(
+			r#"User "{}" ({}) registered with email "{}", hash "{}""#,
+			user.username,
+			user.id,
+			user.email,
+			user.hash
+		).into()),
+		Err(_) => Ok("Failed!".into())
+	}
 }
 
 /*async fn login_user(mut req: Request) -> tide::Result {
 
 }*/
 
-async fn index(mut req: Request) -> tide::Result {
+async fn index(_req: Request) -> tide::Result {
 	Ok("Hello".into())
 }
 
