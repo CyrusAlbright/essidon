@@ -46,6 +46,18 @@ async fn register_user(mut req: Request) -> tide::Result {
 	}
 }
 
+async fn get_user(req: Request) -> tide::Result {
+	let result = req.state().database.get_user_by_username("cyrus").await;
+
+	match result {
+		Ok(value) => match value {
+			Some(user) => Ok(format!(r#"User "{}" found, email "{}""#, user.username, user.email).into()),
+			None => Ok("None found!".into())
+		},
+		Err(_) => Ok("Error!".into())
+	}
+}
+
 /*async fn login_user(mut req: Request) -> tide::Result {
 
 }*/
@@ -61,6 +73,7 @@ async fn main() -> tide::Result<()> {
 	let mut app = tide::with_state(AppState::new().await);
 	app.at("/").get(index);
 	app.at("/register").post(register_user);
+	app.at("/users").get(get_user);
 	// app.at("/login").post(login_user);
 	app.listen(config.address).await?;
 	Ok(())
