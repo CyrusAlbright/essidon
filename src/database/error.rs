@@ -67,15 +67,15 @@ impl From<sqlx::Error> for UserRegistrationError {
 				Some(constraint) => {
 					println!("{}", constraint);
 					match constraint {
-					"username" => EntryError {
-						field: Field::Username,
-						issue: Issue::Taken
-					}.into(),
-					"email" => EntryError {
-						field: Field::Email,
-						issue: Issue::Taken
-					}.into(),
-					_ => DatabaseError::DatabaseError.into()
+						"username" => EntryError {
+							field: Field::Username,
+							issue: Issue::Taken
+						}.into(),
+						"email" => EntryError {
+							field: Field::Email,
+							issue: Issue::Taken
+						}.into(),
+						_ => DatabaseError::DatabaseError.into()
 					}
 				},
 				None => DatabaseError::DatabaseError.into()
