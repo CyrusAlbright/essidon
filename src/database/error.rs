@@ -64,7 +64,9 @@ impl From<sqlx::Error> for UserRegistrationError {
 	fn from(error: sqlx::Error) -> Self {
 		match error {
 			sqlx::Error::Database(db_error) => match db_error.constraint() {
-				Some(constraint) => match constraint {
+				Some(constraint) => {
+					println!("{}", constraint);
+					match constraint {
 					"username" => EntryError {
 						field: Field::Username,
 						issue: Issue::Taken
@@ -74,6 +76,7 @@ impl From<sqlx::Error> for UserRegistrationError {
 						issue: Issue::Taken
 					}.into(),
 					_ => DatabaseError::DatabaseError.into()
+					}
 				},
 				None => DatabaseError::DatabaseError.into()
 			},
