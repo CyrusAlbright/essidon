@@ -5,7 +5,7 @@ pub enum DatabaseError {
 }
 
 impl From<sqlx::Error> for DatabaseError {
-	fn from(error: sqlx::Error) -> Self {
+	fn from(_error: sqlx::Error) -> Self {
 		DatabaseError::DatabaseError
 	}
 }

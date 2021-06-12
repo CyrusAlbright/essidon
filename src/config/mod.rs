@@ -2,8 +2,11 @@ use std::error::Error;
 use std::env::*;
 use std::fmt;
 
+#[derive(Clone)]
 pub struct Config {
-	pub address: String
+	pub address: String,
+	pub database_url: String,
+	pub secret: Vec<u8>,
 }
 
 pub struct ConfigError {
@@ -49,8 +52,18 @@ impl Config {
 		
 		let address = format!("{}:{}", ip, port);
 
+		let secret = var("SECRET")
+			.map_err(|_| ConfigError::new("Env var SECRET must be set"))?
+			.as_bytes()
+			.to_vec();
+
+		let database_url = var("DATABASE_URL")
+			.map_err(|_| ConfigError::new("Env var DATABASE_URL must be set"))?;
+
 		Ok(Config {
-			address
+			address,
+			secret,
+			database_url
 		})
 	}
 }

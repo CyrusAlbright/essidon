@@ -9,6 +9,8 @@ pub use error::*;
 
 use sqlx::postgres::PgPool;
 
+use async_sqlx_session::PostgresSessionStore;
+
 use crate::crypto::hash;
 
 #[derive(Clone)]
@@ -21,6 +23,10 @@ impl Database {
 		PgPool::connect(url).await
 			.map(|connection_pool| Database { connection_pool })
 			.map_err(|_| ())
+	}
+
+	pub async fn create_session_store(&self) -> PostgresSessionStore {
+		PostgresSessionStore::from_client(self.connection_pool.clone())
 	}
 
 	pub async fn register_user(&self, req: UserRegistration) -> Result<User, UserRegistrationError> {
