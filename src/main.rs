@@ -51,7 +51,7 @@ impl AppState {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-	dotenv::dotenv()?;
+	dotenv::dotenv().ok();
 
 	let config = Config::new()?;
 
