@@ -3,14 +3,16 @@ mod database;
 mod auth;
 mod config;
 
+use std::error::Error;
+
 use warp::Filter;
 
-use database::Database;
-use database::UserRegistration;
+// use database::Database;
+// use database::UserRegistration;
 
 use config::Config;
 
-#[derive(Clone)]
+/*#[derive(Clone)]
 struct AppState {
 	database: Database,
 }
@@ -23,7 +25,7 @@ impl AppState {
 
 		AppState { database }
 	}
-}
+}*/
 
 /*async fn register_user(mut req: Request) -> tide::Result {
 	let reg: UserRegistration = req.body_form().await?;
@@ -45,29 +47,10 @@ impl AppState {
 			database::UserRegistrationError::DatabaseError(_) => Ok("Database error!".into())
 		}
 	}
-}
-
-async fn get_user(req: Request) -> tide::Result {
-	let result = req.state().database.get_user_by_username("cyrus").await;
-
-	match result {
-		Ok(value) => match value {
-			Some(user) => Ok(format!(r#"User "{}" found, email "{}""#, user.username, user.email).into()),
-			None => Ok("None found!".into())
-		},
-		Err(_) => Ok("Error!".into())
-	}
-}
-
-async fn index(mut req: Request) -> tide::Result {
-	let session = req.session_mut();
-	let visits: usize = session.get::<usize>("visits").unwrap_or_default() + 1;
-    session.insert("visits", visits).unwrap();
-	Ok(format!("Site visited {} times", visits).into())
 }*/
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Box<dyn Error>> {
 	dotenv::dotenv()?;
 
 	let config = Config::new()?;
@@ -78,8 +61,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	Ok(())
 
-	// let config = config::Config::new()?;
-
 	// let state = AppState::new(&config).await;
 
 	// let mut app = tide::with_state(state.clone());
@@ -88,22 +69,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	// store.migrate().await.expect("Failed to migrate");
 
 	// app.with(tide::sessions::SessionMiddleware::new(
-	// 	store,
+	// store,
 	// 	&config.secret
 	// ));
-
-	// app.at("/api").nest({
-	// 	let mut app = tide::new();
-	// 	app.at("/");
-	// 	app
-	// });
-	// app.at("/srv/*").serve_dir("srv/")?;
-	// app.at("/").serve_file("srv/index.html")?;
-	// app.at("/about").serve_file("srv/index.html")?;
-	// app.at("/contact").serve_file("srv/index.html")?;
 	// app.at("/register").post(register_user);
 	// app.at("/users").get(get_user);
 	// app.at("/login").post(login_user);
-
-	// app.listen(config.address).await?;
 }
