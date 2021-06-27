@@ -55,7 +55,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 	let config = Config::new()?;
 
-	let file_srv = warp::path::end().and(warp::fs::dir("srv"));
+	let file_srv = warp::path("/").and(warp::fs::dir("srv"));
 
 	let routes = warp::get().and(
 		file_srv
