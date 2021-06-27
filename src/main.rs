@@ -55,7 +55,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 	let config = Config::new()?;
 
-	let routes = warp::any().map(|| "Hello world!");
+	let index = warp::path::end().map(|| "Hello world!");
+
+	let routes = warp::get().and(index);
 
 	warp::serve(routes).run(config.ip).await;
 
