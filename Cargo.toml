@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 warp = "0.3.1"
-sqlx = { version = "0.5.5", features = [ "runtime-async-std-native-tls", "postgres", "chrono", "macros" ] }
+sqlx = { version = "0.5.5", features = [ "runtime-tokio-native-tls", "postgres", "chrono", "macros" ] }
 serde = { version = "1.0.125", features = ["derive"] }
 chrono = { version = "0.4.19", features = [ "serde" ] }
 bcrypt = "0.8.2"
