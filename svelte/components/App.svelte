@@ -1,6 +1,5 @@
 <script>
-	import { onDestroy } from "svelte";
-	import Navaid from "navaid";
+	import routie from "../lib/routie.min.js";
 
 	import Navbar from "./Navbar.svelte";
 
@@ -45,14 +44,13 @@
 	addEventListener("pushstate", track);
 	addEventListener("popstate", track);
 
-	const router = Navaid("/")
-		.on("/", () => run(import("../routes/Home.svelte")))
-		.on("/about", () => run(import("../routes/About.svelte")))
-		.on("/contact", () => run(import("../routes/Contact.svelte")))
-		.on("/login", () => run(import("../routes/Login.svelte")))
-		.listen();
-	
-	onDestroy(router.unlisten);
+	routie({
+		"/about": () => run(import("../routes/About.svelte")),
+		"/contact": () => run(import("../routes/Contact.svelte")),
+		"/login": () => run(import("../routes/Login.svelte")),
+		"/": () => run(import("../routes/Home.svelte")),
+		"": () => run(import("../routes/Home.svelte"))
+	});
 </script>
 
 <Navbar {active}/>

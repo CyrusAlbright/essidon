@@ -7,15 +7,15 @@
 	export let links = [
 		{
 			title: "About",
-			href: "/about"
+			href: "#/about"
 		},
 		{
 			title: "Contact",
-			href: "/contact"
+			href: "#/contact"
 		},
 		{
 			title: "Login",
-			href: "/login",
+			href: "#/login",
 			style: "login"
 		}
 	];
@@ -70,7 +70,7 @@
 {#if visible}
 	<header in:squish>
 		<nav in:slide out:slideOut>
-			<a class="logo" href="/">
+			<a class="logo" href="/#/">
 				Essidon
 			</a>
 			<ul>
