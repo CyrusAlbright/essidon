@@ -1,1 +1,1 @@
-web: ./target/release/curious-enigma
+web: ./target/release/essidon
