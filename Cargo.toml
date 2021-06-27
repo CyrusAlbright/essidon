@@ -1,20 +1,18 @@
 [package]
-name = "curious-enigma"
+name = "essidon"
 version = "0.3.0"
 authors = ["Drew Christensen <emoryandrewchristensen@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-# tide = "0.16.0"
-tide = { git = "https://github.com/http-rs/tide", branch = "main" }
-async-std = { version = "1.9.0", features = ["attributes"] }
+tokio = { version = "1", features = ["full"] }
+warp = "0.3.1"
 sqlx = { version = "0.5.5", features = [ "runtime-async-std-native-tls", "postgres", "chrono", "macros" ] }
 serde = { version = "1.0.125", features = ["derive"] }
 chrono = { version = "0.4.19", features = [ "serde" ] }
 bcrypt = "0.8.2"
-async-sqlx-session = { version = "0.4.0", features = ["pg"] }
 dotenv = "0.15.0"
 
 [[bin]]
-name = "curious-enigma"
+name = "essidon"
 path = "src/main.rs"

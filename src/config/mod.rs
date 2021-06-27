@@ -1,12 +1,13 @@
 use std::error::Error;
+use std::net::{ IpAddr, SocketAddr };
 use std::env::*;
 use std::fmt;
 
 #[derive(Clone)]
 pub struct Config {
-	pub address: String,
-	pub database_url: String,
+	pub ip: SocketAddr,
 	pub secret: Vec<u8>,
+	pub database_url: String,
 }
 
 pub struct ConfigError {
@@ -47,10 +48,12 @@ impl Config {
 			.parse::<u16>()
 			.map_err(|_| ConfigError::new("Env var PORT must be an integer"))?;
 		
-		let ip = var("ADDR")
-			.map_err(|_| ConfigError::new("Env var ADDR must be set"))?;
+		let addr: IpAddr = var("ADDR")
+			.map_err(|_| ConfigError::new("Env var ADDR must be set"))?
+			.parse()
+			.map_err(|_| ConfigError::new("Env var ADDR must be a valid IP address"))?;
 		
-		let address = format!("{}:{}", ip, port);
+		let ip: SocketAddr = (addr, port).into();
 
 		let secret = var("SECRET")
 			.map_err(|_| ConfigError::new("Env var SECRET must be set"))?
@@ -61,7 +64,7 @@ impl Config {
 			.map_err(|_| ConfigError::new("Env var DATABASE_URL must be set"))?;
 
 		Ok(Config {
-			address,
+			ip,
 			secret,
 			database_url
 		})

@@ -3,8 +3,12 @@ mod database;
 mod auth;
 mod config;
 
+use warp::Filter;
+
 use database::Database;
 use database::UserRegistration;
+
+use config::Config;
 
 #[derive(Clone)]
 struct AppState {
@@ -21,9 +25,7 @@ impl AppState {
 	}
 }
 
-type Request = tide::Request<AppState>;
-
-async fn register_user(mut req: Request) -> tide::Result {
+/*async fn register_user(mut req: Request) -> tide::Result {
 	let reg: UserRegistration = req.body_form().await?;
 
 	match req.state().database.register_user(reg).await {
@@ -62,40 +64,46 @@ async fn index(mut req: Request) -> tide::Result {
 	let visits: usize = session.get::<usize>("visits").unwrap_or_default() + 1;
     session.insert("visits", visits).unwrap();
 	Ok(format!("Site visited {} times", visits).into())
-}
+}*/
 
-#[async_std::main]
-async fn main() -> tide::Result<()> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
 	dotenv::dotenv()?;
 
-	let config = config::Config::new()?;
+	let config = Config::new()?;
 
-	let state = AppState::new(&config).await;
+	let routes = warp::any().map(|| "Hello world!");
 
-	let mut app = tide::with_state(state.clone());
+	warp::serve(routes).run(config.ip).await;
 
-	let store = state.database.create_session_store().await;
-	store.migrate().await.expect("Failed to migrate");
+	Ok(())
 
-	app.with(tide::sessions::SessionMiddleware::new(
-		store,
-		&config.secret
-	));
+	// let config = config::Config::new()?;
+
+	// let state = AppState::new(&config).await;
+
+	// let mut app = tide::with_state(state.clone());
+
+	// let store = state.database.create_session_store().await;
+	// store.migrate().await.expect("Failed to migrate");
+
+	// app.with(tide::sessions::SessionMiddleware::new(
+	// 	store,
+	// 	&config.secret
+	// ));
 
 	// app.at("/api").nest({
 	// 	let mut app = tide::new();
 	// 	app.at("/");
 	// 	app
 	// });
-	app.at("/srv/*").serve_dir("srv/")?;
-	app.at("/").serve_file("srv/index.html")?;
-	app.at("/about").serve_file("srv/index.html")?;
-	app.at("/contact").serve_file("srv/index.html")?;
+	// app.at("/srv/*").serve_dir("srv/")?;
+	// app.at("/").serve_file("srv/index.html")?;
+	// app.at("/about").serve_file("srv/index.html")?;
+	// app.at("/contact").serve_file("srv/index.html")?;
 	// app.at("/register").post(register_user);
 	// app.at("/users").get(get_user);
 	// app.at("/login").post(login_user);
 
-	app.listen(config.address).await?;
-
-	Ok(())
+	// app.listen(config.address).await?;
 }
