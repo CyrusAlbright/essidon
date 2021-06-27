@@ -4,6 +4,9 @@ version = "0.3.0"
 authors = ["Drew Christensen <emoryandrewchristensen@gmail.com>"]
 edition = "2018"
 
+[build-dependencies]
+npm_rs = "0.1.1"
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 warp = "0.3.1"

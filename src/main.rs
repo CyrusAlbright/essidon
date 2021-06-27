@@ -73,7 +73,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 	// store.migrate().await.expect("Failed to migrate");
 
 	// app.with(tide::sessions::SessionMiddleware::new(
-	// store,
+	//  store,
 	// 	&config.secret
 	// ));
 	// app.at("/register").post(register_user);
