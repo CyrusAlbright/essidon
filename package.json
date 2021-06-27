@@ -6,9 +6,7 @@
     "dev": "rollup -c -w",
     "start": "sirv srv --single --no-clear"
   },
-  "dependencies": {
-    "navaid": "^1.0.2"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-node-resolve": "^11.0.0",
