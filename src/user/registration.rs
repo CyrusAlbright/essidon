@@ -1,4 +1,7 @@
-use super::error::*;
+use crate::database::Database;
+use super::UserStore;
+use super::User;
+use super::error::{ EntryError, Field, Issue };
 
 static MIN_USERNAME_LENGTH: u32 = 4;
 static MAX_USERNAME_LENGTH: u32 = 64;
@@ -8,7 +11,7 @@ static MAX_EMAIL_LENGTH: u32 = 128;
 static MIN_PASSWORD_LENGTH: u32 = 8;
 static MAX_PASSWORD_LENGTH: u32 = 32;
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct UserRegistration {
 	pub username: String,
 	pub email: String,
@@ -77,5 +80,35 @@ impl UserRegistration {
 		self.validate_password()?;
 
 		Ok(())
+	}
+
+	pub async fn register(self, database: Database) -> Result<User, anyhow::Error> {
+		let result = database.register_user(self).await;
+
+		match result {
+			Ok(user) => Ok(user),
+			Err(error) => match error.downcast_ref::<sqlx::Error>() {
+				Some(sqlx_error) => match sqlx_error {
+					sqlx::Error::Database(db_error) => match db_error.constraint() {
+						Some(constraint) => match constraint {
+							"users_username_key" => Err(EntryError {
+								field: Field::Username,
+								issue: Issue::Taken
+							}.into()),
+							"users_email_key" => Err(EntryError {
+								field: Field::Email,
+								issue: Issue::Taken
+							}.into()),
+							_ => {
+								Err(error)
+							}
+						},
+						None => Err(error)
+					},
+					_ => Err(error)
+				},
+				None => Err(error)
+			}
+		}
 	}
 }

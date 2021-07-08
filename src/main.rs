@@ -1,31 +1,16 @@
-mod crypto;
-mod database;
 mod auth;
 mod config;
+mod database;
+mod routes;
+mod user;
+mod error;
+mod session;
 
-use std::error::Error;
+use warp::{ Filter, Rejection };
 
-use warp::Filter;
-
-// use database::Database;
-// use database::UserRegistration;
+use database::Database;
 
 use config::Config;
-
-/*#[derive(Clone)]
-struct AppState {
-	database: Database,
-}
-
-impl AppState {
-	async fn new(config: &config::Config) -> AppState {
-		let database = Database::connect(&config.database_url)
-			.await
-			.expect("Failed to connect to database");
-
-		AppState { database }
-	}
-}*/
 
 /*async fn register_user(mut req: Request) -> tide::Result {
 	let reg: UserRegistration = req.body_form().await?;
@@ -50,24 +35,19 @@ impl AppState {
 }*/
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<(), anyhow::Error> {
 	dotenv::dotenv().ok();
+	pretty_env_logger::init();
 
 	let config = Config::new()?;
 
-	let file_srv = warp::fs::dir("srv");
+	let database = Database::initialize(&config).await?;
 
-	let routes = warp::get().and(
-		file_srv
-	);
+	let routes = routes::routes(database);
 
 	warp::serve(routes).run(config.ip).await;
 
 	Ok(())
-
-	// let state = AppState::new(&config).await;
-
-	// let mut app = tide::with_state(state.clone());
 
 	// let store = state.database.create_session_store().await;
 	// store.migrate().await.expect("Failed to migrate");

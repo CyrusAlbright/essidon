@@ -1,92 +1,105 @@
-mod user;
-pub use user::*;
+use tokio::time::interval;
+use std::time::Duration;
 
-mod user_registration;
-pub use user_registration::*;
+use sqlx::{ postgres::PgPool, Executor };
 
-mod error;
-pub use error::*;
+use chrono::Utc;
 
-use sqlx::postgres::PgPool;
+use crate::config::Config;
 
-use crate::crypto::hash;
-
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Database {
-	connection_pool: PgPool
+	pub pool: PgPool
 }
 
 impl Database {
-	pub async fn connect(url: &str) -> Result<Self, ()> {
-		PgPool::connect(url).await
-			.map(|connection_pool| Database { connection_pool })
-			.map_err(|_| ())
-	}
+	pub async fn initialize(config: &Config) -> Result<Self, anyhow::Error> {
+		log::trace!("Initializing database...");
 
-	pub async fn register_user(&self, req: UserRegistration) -> Result<User, UserRegistrationError> {
-		req.validate()?;
+		log::trace!("Connecting to database...");
+		let pool = PgPool::connect(&config.database_url).await?;
+		log::trace!("Done connecting to database.");
+
+		let database = Database {
+			pool
+		};
+
+		if let Err(error) = database.migrate().await {
+			log::error!("Error while migrating database: {}", error);
+		}
+
+		let database_clone = database.clone();
+
+		tokio::spawn(async move {
+			let mut interval = interval(Duration::from_secs(600));
+			interval.tick().await;
 		
-		let hash = hash(&req.password)?;
+			loop {
+				interval.tick().await;
+				if let Err(error) = database_clone.cleanup().await {
+					log::error!("Error while cleaning up session database: {}", error);
+				}
+			}
+		});
 
-		let user = sqlx::query_as!(
-			User, 
-			r#"
-				INSERT INTO users ( username, email, hash ) 
-				VALUES ( $1, $2, $3 )
-				RETURNING id, username, email, hash, created_at, role as "role!: Role"
-			"#, 
-			req.username,
-			req.email,
-			hash
-		)
-		.fetch_one(&self.connection_pool)
+		log::trace!("Done initializing database.");
+
+		Ok(database)
+	}
+	pub async fn migrate(&self) -> Result<(), anyhow::Error> {
+		log::trace!("Migrating database...");
+
+		log::trace!("Migrating sessions database...");
+		let mut connection = self.pool.acquire().await?;
+		connection.execute(r#"
+			CREATE TABLE IF NOT EXISTS sessions (
+				id VARCHAR NOT NULL PRIMARY KEY,
+				expires TIMESTAMP NULL,
+				session TEXT NOT NULL
+			)
+		"#)
 		.await?;
+		log::trace!("Done migrating sessions database.");
 		
-		Ok(user)
-	}
+		log::trace!("Migrating users database...");
+		connection.execute(r#"
+			DO $$ BEGIN
+				CREATE TYPE USER_ROLE AS ENUM ('user', 'admin');
+			EXCEPTION
+				WHEN duplicate_object THEN null;
+			END $$;
+		"#)
+		.await?;
+		connection.execute(r#"
+			CREATE TABLE IF NOT EXISTS users (
+				id SERIAL PRIMARY KEY,
+				username VARCHAR(64) NOT NULL UNIQUE,
+				email VARCHAR(128) NOT NULL UNIQUE,
+				hash VARCHAR(128) NOT NULL,
+				created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				role USER_ROLE NOT NULL DEFAULT 'user'
+			)
+		"#)
+		.await?;
+		log::trace!("Done migrating users database.");
 
-	pub async fn get_user_by_id(&self, id: i32) -> Result<Option<User>, DatabaseError> {
-		let user = sqlx::query_as!(
-			User, 
-			r#"
-				SELECT id, username, email, hash, created_at, role as "role!: Role" FROM users
-				WHERE id=$1
-			"#,
-			id
-		)
-		.fetch_optional(&self.connection_pool)
+		log::trace!("Done migrating database.");
+
+		Ok(())
+	}
+	pub async fn cleanup(&self) -> Result<(), anyhow::Error> {
+		log::trace!("Cleaning up sessions database...");
+
+		let mut connection = self.pool.acquire().await?;
+		sqlx::query(r#"
+			DELETE FROM sessions WHERE expires < $1
+		"#)
+		.bind(Utc::now())
+		.execute(&mut connection)
 		.await?;
 
-		Ok(user)
-	}
+		log::trace!("Done cleaning up sessions database.");
 
-	pub async fn get_user_by_username(&self, username: &str) -> Result<Option<User>, DatabaseError> {
-		let user = sqlx::query_as!(
-			User, 
-			r#"
-				SELECT id, username, email, hash, created_at, role as "role!: Role" FROM users
-				WHERE username=$1
-			"#,
-			username
-		)
-		.fetch_optional(&self.connection_pool)
-		.await?;
-
-		Ok(user)
-	}
-
-	pub async fn get_user_by_email(&self, email: &str) -> Result<Option<User>, DatabaseError> {
-		let user = sqlx::query_as!(
-			User, 
-			r#"
-				SELECT id, username, email, hash, created_at, role as "role!: Role" FROM users
-				WHERE email=$1
-			"#,
-			email
-		)
-		.fetch_optional(&self.connection_pool)
-		.await?;
-
-		Ok(user)
+		Ok(())
 	}
 }

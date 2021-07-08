@@ -19,7 +19,7 @@
 </svelte:head>
 
 <main>
-	<a href="/#/" id="close" aria-label="Close">
+	<a href="#/" id="close" aria-label="Close">
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 11 11">
 			<path stroke-linecap="round" stroke-width="1.5" d="m0 0 9,9 M0 9 9,0" />
 		</svg>
@@ -40,11 +40,11 @@
 			<button>
 				Submit
 			</button>
-			<a href="/#/">Forgot password?</a>
+			<a href="#/">Forgot password?</a>
 		</fieldset>
 		<p>
 			Don't have an account?
-			<a href="/#/">Sign up</a>
+			<a href="#/">Sign up</a>
 		</p>
 	</section>
 	<section id="background">

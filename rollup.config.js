@@ -34,7 +34,7 @@ export default {
 		name: 'app',
 		format: 'es',
 		sourcemap: true,
-		dir: 'srv/build/',
+		dir: 'spa/build/',
 		manualChunks: (moduleName) => {
 			if (moduleName.includes("node_modules")) {
 				return "vendor";
@@ -72,7 +72,7 @@ export default {
 
 		// Watch the `public` directory and refresh the
 		// browser on changes when not in production
-		!production && livereload('srv'),
+		!production && livereload('spa'),
 
 		// If we're building for production (npm run build
 		// instead of npm run dev), minify

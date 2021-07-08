@@ -70,7 +70,7 @@
 {#if visible}
 	<header in:squish>
 		<nav in:slide out:slideOut>
-			<a class="logo" href="/#/">
+			<a class="logo" href="#/">
 				Essidon
 			</a>
 			<ul>

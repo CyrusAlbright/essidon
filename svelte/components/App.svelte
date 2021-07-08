@@ -36,20 +36,19 @@
 		});
 	}
 
-	function track(obj) {
+	/*function track(obj) {
 		uri = obj.state || obj.uri || location.pathname;
 	}
 
 	addEventListener("replacestate", track);
 	addEventListener("pushstate", track);
-	addEventListener("popstate", track);
+	addEventListener("popstate", track);*/
 
 	routie({
 		"/about": () => run(import("../routes/About.svelte")),
 		"/contact": () => run(import("../routes/Contact.svelte")),
 		"/login": () => run(import("../routes/Login.svelte")),
-		"/": () => run(import("../routes/Home.svelte")),
-		"": () => run(import("../routes/Home.svelte"))
+		"*": () => run(import("../routes/Home.svelte"))
 	});
 </script>
 
