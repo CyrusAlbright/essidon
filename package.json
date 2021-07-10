@@ -4,7 +4,7 @@
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "start": "sirv srv --single --no-clear"
+    "start": "sirv ./ --single --no-clear"
   },
   "dependencies": {},
   "devDependencies": {

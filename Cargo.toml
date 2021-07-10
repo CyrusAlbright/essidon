@@ -15,6 +15,7 @@ log = "0.4"
 pretty_env_logger = "0.4"
 
 tokio = { version = "1", features = [ "full" ] }
+tokio-stream = { version = "0.1.1", features = ["net"] }
 async-trait = "0.1.50"
 warp = "0.3.1"
 async-session = "3.0.0"

@@ -3,7 +3,8 @@
 
 	import { navbarVisible } from "../components/stores.js";
 
-	let showPassword = false;
+	import TextInput from "../components/TextInput.svelte";
+	import PasswordInput from "../components/PasswordInput.svelte";
 
 	onMount(() => {
 		navbarVisible.update(_ => false)
@@ -12,6 +13,22 @@
 	onDestroy(() => {
 		navbarVisible.update(_ => true);
 	});
+
+	let loginElement, passwordElement;
+
+	async function tryLogin() {
+		let response = await fetch("/login", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json;charset=utf-8"
+			},
+			body: JSON.stringify({ login: loginElement.getValue(), password: passwordElement.getValue() })
+		});
+
+		let result = await response.json();
+		console.log(response);
+		console.log(result);
+	}
 </script>
 
 <svelte:head>
@@ -20,27 +37,31 @@
 
 <main>
 	<a href="#/" id="close" aria-label="Close">
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 11 11">
-			<path stroke-linecap="round" stroke-width="1.5" d="m0 0 9,9 M0 9 9,0" />
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -6 12 12">
+			<path stroke-linecap="round" stroke-width="1.5" d="M -5 -5 5,5 M -5 5 5,-5" />
 		</svg>
 	</a>
 	<section id="login">
 		<fieldset>
 			<legend>Login</legend>
 			<div>
-				<label for="username">Username</label>
-				<input type="text" id="username" name="username">
+				<label for="login">Username/Email</label>
+				<TextInput name="login" bind:this={loginElement} />
 			</div>
 			<div>
-				<label for="password">Password</label>
-				<input type={showPassword ? "text" : "password"} id="password" name="password">
-				<input type="checkbox" id="show-password" name="show-password" bind:checked={showPassword}>
-				<label class="inline" for="show-password">Show password</label>
+				<label for="password">
+					Password
+				</label>
+				<PasswordInput name="password" bind:this={passwordElement} />
 			</div>
-			<button>
-				Submit
-			</button>
-			<a href="#/">Forgot password?</a>
+			<div class="center">
+				<button on:click={tryLogin}>
+					Submit
+				</button>
+			</div>
+			<div class="center">
+				<a href="#/">Forgot password?</a>
+			</div>
 		</fieldset>
 		<p>
 			Don't have an account?
@@ -96,7 +117,7 @@
 	fieldset {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
+		align-items: stretch;
 		justify-content: center;
 
 		background-color: white;
@@ -106,6 +127,9 @@
 	}
 	fieldset>* {
 		margin: 10px 0;
+	}
+	div.center {
+		text-align: center;
 	}
 	section#background {
 		background-image: var(--gradient-background);
@@ -117,38 +141,13 @@
 		font-weight: bold;
 		margin: 0 auto;
 	}
-	input[type="text"],
-	input[type="password"] {
-		display: block;
-		font-size: 100%;
-		font-family: inherit;
-		appearance: none;
-		text-decoration: none;
-		border: 2px solid grey;
-		border-radius: 100px;
-		padding: 5px 10px;
-		outline: none;
-		transition: border-color 200ms;
-	}
-	input[type="text"]:hover,
-	input[type="text"]:focus,
-	input[type="password"]:hover,
-	input[type="password"]:focus {
-		border-color: var(--color-2);
-	}
-	input[type="text"]:focus,
-	input[type="password"]:focus {
-		outline: 1px solid var(--color-2);
-		outline-offset: 2px;
-	}
 	label {
-		margin-left: 10px;
-	}
-	label.inline {
-		margin-left: 0;
 		font-size: 1rem;
+		font-weight: 500;
+		margin-left: 10px;
+		color: grey;
 	}
-	input[type="checkbox"] {
+	/*input[type="checkbox"] {
 		appearance: none;
 		position: relative;
 		outline: none;
@@ -189,7 +188,7 @@
 	}
 	input[type="checkbox"] + label {
 		cursor: pointer;
-	}
+	}*/
 	button {
 		--button-color: var(--color-1);
 		font-size: 100%;

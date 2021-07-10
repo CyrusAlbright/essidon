@@ -8,6 +8,7 @@ mod spa;
 mod templates;
 mod global;
 mod database;
+mod chat;
 
 pub use database::*;
 
@@ -22,6 +23,8 @@ pub fn routes(database: Database) -> impl Filter<Extract = (impl Reply,), Error 
 		http_only: true,
 		same_site: Some(SameSiteCookieOption::Strict)
 	};
+
+	
 
 	global::routes()
 		.or(warp::path("spa").and(spa::routes()))

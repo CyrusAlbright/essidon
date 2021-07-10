@@ -8,11 +8,6 @@ use crate::database::Database;
 use crate::session;
 use crate::routes::database_route;
 
-// pub fn auth_route<T>(with_session: T) -> impl Filter<Extract = (User,), Error = Rejection> + Clone {
-// 	let route = with_session
-// 		.and_then()
-// }
-
 pub fn routes(database: Database, cookie_options: CookieOptions) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
 	warp::path("register").and(register_route(database.clone(), cookie_options.clone()))
 		.or(warp::path("login").and(login_route(database.clone(), cookie_options.clone())))
@@ -109,25 +104,6 @@ pub fn login_route(database: Database, cookie_options: CookieOptions) -> impl Fi
 		.untuple_one()
 		.and_then(warp_sessions::reply::with_session)
 }
-
-// async fn login<Store: async_session::SessionStore>(session: &mut warp_sessions::SessionWithStore<Store>, login: UserLogin) -> Result<(Box<dyn Reply>, &mut warp_sessions::SessionWithStore<Store>), Rejection> {
-// 	let maybe_user = login.login(database.clone()).await.map_err(|e| -> ErrorWrapper {e.into()})?;
-
-// 	match maybe_user {
-// 		Some(user) => {
-// 			Ok((
-// 				Box::new(warp::reply::with_status(warp::redirect::redirect(Uri::from_static("/")), StatusCode::FOUND)),
-// 				session
-// 			))
-// 		},
-// 		None => {
-// 			Ok((
-// 				Box::new(warp::reply::with_status(warp::redirect::redirect(Uri::from_static("/")), StatusCode::FOUND)),
-// 				session
-// 			))
-// 		}
-// 	}
-// }
 
 pub fn extract_body<T: DeserializeOwned + Send>() -> impl Filter<Extract = (T,), Error = Rejection> + Clone {
 	warp::body::content_length_limit(1024 * 32)
